@@ -379,7 +379,8 @@ bool is_base_format_used_by_rk_video(const uint32_t base_format)
 		|| MALI_GRALLOC_FORMAT_INTERNAL_YUV422_8BIT == base_format
 		|| MALI_GRALLOC_FORMAT_INTERNAL_Y210 == base_format
 		|| MALI_GRALLOC_FORMAT_INTERNAL_NV15 == base_format
-		|| MALI_GRALLOC_FORMAT_INTERNAL_NV24 == base_format )
+		|| MALI_GRALLOC_FORMAT_INTERNAL_NV24 == base_format
+		|| MALI_GRALLOC_FORMAT_INTERNAL_NV30 == base_format )
 	{
 		return true;
 	}
@@ -1505,6 +1506,11 @@ static internal_format_t rk_gralloc_select_format(const mali_gralloc_android_for
 		D("to use 'MALI_GRALLOC_FORMAT_INTERNAL_NV24' as internal_format for req_format of 'HAL_PIXEL_FORMAT_YCBCR_444_888'");
 		internal_format = MALI_GRALLOC_FORMAT_INTERNAL_NV24;
 	}
+	else if ( HAL_PIXEL_FORMAT_NV30 == req_format )
+	{
+		D("to use 'MALI_GRALLOC_FORMAT_INTERNAL_NV30' as internal_format for req_format of 'HAL_PIXEL_FORMAT_NV30'");
+		internal_format = MALI_GRALLOC_FORMAT_INTERNAL_NV30;
+	}
         else if ( req_format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED )
 	{
 		if ( GRALLOC_USAGE_HW_VIDEO_ENCODER == (usage & GRALLOC_USAGE_HW_VIDEO_ENCODER)
@@ -1658,6 +1664,7 @@ static internal_format_t rk_gralloc_select_format(const mali_gralloc_android_for
                                                 && 0 == (usage & GRALLOC_USAGE_HW_CAMERA_READ) )
                                 {
                                         /* 若 internal_format 不是 nv12,
+                                           且 不是 NV30,
                                            且 不是 NV24,
                                            且 不是 NV15,
                                            且 不是 MALI_GRALLOC_FORMAT_INTERNAL_P010,
@@ -1667,6 +1674,7 @@ static internal_format_t rk_gralloc_select_format(const mali_gralloc_android_for
                                            且 根据 size 判断 当前的 buffer_of_sf_client_layer 应该 使用 AFBC 格式,
                                            则... */
                                         if ( internal_format != MALI_GRALLOC_FORMAT_INTERNAL_NV12
+                                                && internal_format != MALI_GRALLOC_FORMAT_INTERNAL_NV30
                                                 && internal_format != MALI_GRALLOC_FORMAT_INTERNAL_NV24
                                                 && internal_format != MALI_GRALLOC_FORMAT_INTERNAL_NV15
                                                 && internal_format != MALI_GRALLOC_FORMAT_INTERNAL_P010

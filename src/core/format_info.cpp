@@ -175,6 +175,14 @@ const std::vector<format_info_t> formats = {
 		.tile_size = 1, .has_alpha = false, .is_rgb = false, .is_yuv = true,
 		.afbc = false, .linear = false, .yuv_transform = false, .flex = false, .block_linear = false, .afrc = true,
 	},
+	/* 444 (10-bit) 2 plane */
+	{
+		.id = MALI_GRALLOC_FORMAT_INTERNAL_NV30,
+		.npln = 3, .ncmp = { 1, 2, 0 }, .bps = 10, .bpp_afbc = { 0, 0, 0 }, .bpp = { 10, 20, 0 },
+		.hsub = 1, .vsub = 1, .align_w = 2, .align_h = 2, ALIGN_W_CPU_DEFAULT,
+		.tile_size = 1, .has_alpha = false, .is_rgb = false, .is_yuv = true,
+		.afbc = false, .linear = true, .yuv_transform = false, .flex = false, .block_linear = false, .afrc = false,
+	},
 	/* 444 (10-bit) 3 plane */
 	{
 		.id = MALI_GRALLOC_FORMAT_INTERNAL_Q410,
@@ -596,6 +604,20 @@ const format_ip_support_t formats_ip_support[] = {
 		.dpu_aeu_wr = F_NONE,
 		.vpu_rd = F_NONE,
 		.vpu_wr = F_NONE,
+		.cam_wr = F_NONE,
+	},
+	/* 444 (10-bit) 2 plane */
+	{
+		.id = MALI_GRALLOC_FORMAT_INTERNAL_NV30,
+		.cpu_rd = F_NONE,
+		.cpu_wr = F_NONE,
+		.gpu_rd = F_BL_YUV,
+		.gpu_wr = F_NONE,
+		.dpu_rd = F_NONE,
+		.dpu_wr = F_NONE,
+		.dpu_aeu_wr = F_NONE,
+		.vpu_rd = F_NONE,
+		.vpu_wr = F_BL_YUV,
 		.cam_wr = F_NONE,
 	},
 	/* 444 (10-bit) 3 plane */

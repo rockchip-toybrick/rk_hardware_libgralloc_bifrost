@@ -135,6 +135,22 @@ static std::vector<std::vector<PlaneLayoutComponent>> plane_layout_components_fr
 				{ Y, 32, 10 }, { CR, 42, 10 }, { Y, 52, 10 }, { A, 62, 1 }, { A, 63, 1 }
 			} }
 		},
+		/* Semi-planar 8 bit YUV 4:4:4 */
+		{
+			.drm_fourcc = DRM_FORMAT_NV24,
+			.components = {
+				{ { Y, 0, 8 } },
+				{ { CB, 0, 8 }, { CR, 8, 8 } }
+			}
+		},
+		/* Semi-planar 10 bit YUV 4:4:4 */
+		{
+			.drm_fourcc = DRM_FORMAT_NV30,
+			.components = {
+				{ { Y, 0, 10 } },
+				{ { CB, 0, 10 }, { CR, 10, 10 } }
+			}
+		},
 		/* Semi-planar 8 bit YUV 4:2:2 */
 		{
 			.drm_fourcc = DRM_FORMAT_NV16,

@@ -49,6 +49,7 @@ const static std::unordered_map<mali_gralloc_internal_format, table_entry> table
 	{ MALI_GRALLOC_FORMAT_INTERNAL_YU12, {DRM_FORMAT_YUV420, format_colormodel::yuv} },
 	{ MALI_GRALLOC_FORMAT_INTERNAL_NV12, {DRM_FORMAT_NV12, format_colormodel::yuv} },
 	{ MALI_GRALLOC_FORMAT_INTERNAL_NV15, {DRM_FORMAT_NV15, format_colormodel::yuv} },
+	{ MALI_GRALLOC_FORMAT_INTERNAL_NV30, {DRM_FORMAT_NV30, format_colormodel::yuv} },
 	{ MALI_GRALLOC_FORMAT_INTERNAL_NV16, {DRM_FORMAT_NV16, format_colormodel::yuv} },
 	{ MALI_GRALLOC_FORMAT_INTERNAL_NV24, {DRM_FORMAT_NV24, format_colormodel::yuv} },
 	{ MALI_GRALLOC_FORMAT_INTERNAL_NV21, {DRM_FORMAT_NV21, format_colormodel::yuv} },
