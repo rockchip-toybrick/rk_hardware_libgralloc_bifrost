@@ -817,6 +817,15 @@ static void calc_allocation_size(const int width,
 
 				plane_info[plane].byte_stride = byte_stride;
 			}
+
+			if ( MALI_GRALLOC_FORMAT_INTERNAL_NV30 == format.id )
+			{
+				uint32_t byte_stride = plane_info[plane].byte_stride;
+
+				byte_stride = GRALLOC_ALIGN(byte_stride, 64);
+
+				plane_info[plane].byte_stride = byte_stride;
+			}
 		}
 		MALI_GRALLOC_LOGV("Byte stride: %d", plane_info[plane].byte_stride);
 
