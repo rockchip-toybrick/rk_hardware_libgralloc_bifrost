@@ -18,8 +18,6 @@
  */
 #pragma once
 
-#include "gralloc_version.h"
-
 struct private_handle_t;
 
 int mali_gralloc_lock(buffer_handle_t buffer, uint64_t usage, int l, int t, int w, int h,

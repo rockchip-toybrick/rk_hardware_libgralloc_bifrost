@@ -23,6 +23,14 @@
 #include "buffer.h"
 #include "internal_format.h"
 
+/* Flags to describe additional buffer descriptor information */
+enum buffer_descriptor_flags : uint32_t
+{
+	GPU_DATA_BUFFER_WITH_ANY_FORMAT = 1,
+	USE_AIDL_FRONTBUFFER_USAGE = 1 << 1,
+	SUPPORTS_R8 = 1 << 2,
+};
+
 /* A buffer_descriptor contains the requested parameters for the buffer
  * as well as the calculated parameters that are passed to the allocator.
  */
@@ -38,7 +46,7 @@ struct buffer_descriptor_t
 	uint64_t consumer_usage{};
 	uint64_t hal_format{};
 	uint32_t layer_count{};
-	std::string name{"Unnamed"};
+	std::string name{ "Unnamed" };
 	uint64_t reserved_size{};
 
 	/*
@@ -49,4 +57,6 @@ struct buffer_descriptor_t
 	int pixel_stride{};
 	internal_format_t alloc_format{};
 	plane_layout plane_info{};
+
+	std::underlying_type_t<buffer_descriptor_flags> flags{};
 };

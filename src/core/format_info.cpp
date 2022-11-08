@@ -19,7 +19,6 @@
 #include "helper_functions.h"
 #include "gralloc/formats.h"
 #include "format_info.h"
-#include "gralloc_version.h"
 #include "usages.h"
 
 /* Default width aligned to whole pixel (CPU access). */
@@ -31,6 +30,7 @@
  * NOTE: This table should only be used within
  * the gralloc library and not by clients directly.
  */
+/* clang-format off */
 const std::vector<format_info_t> formats = {
 	{
 		.id = MALI_GRALLOC_FORMAT_INTERNAL_RGB_565,
@@ -321,8 +321,14 @@ const std::vector<format_info_t> formats = {
 		.tile_size = 1, .has_alpha = false, .is_rgb = false, .is_yuv = false,
 		.afbc = false, .linear = true, .yuv_transform = false, .flex = false, .block_linear = false, .afrc = false,
 	},
+	{
+		.id = MALI_GRALLOC_FORMAT_INTERNAL_R8,
+		.npln = 1, .ncmp = { 1, 0, 0 }, .bps = 8, .bpp_afbc = { 0, 0, 0 }, .bpp = { 8, 0, 0 },
+		.hsub = 0, .vsub = 0, .align_w = 1, .align_h = 1, ALIGN_W_CPU_DEFAULT,
+		.tile_size = 1, .has_alpha = false, .is_rgb = true, .is_yuv = false,
+		.afbc = false, .linear = true, .yuv_transform = false, .flex = false, .block_linear = false, .afrc = false,
+	}
 };
-
 
 /*
  * This table represents the superset of flags for each base format and producer/consumer.
@@ -858,7 +864,21 @@ const format_ip_support_t formats_ip_support[] = {
 		.vpu_wr = F_NONE,
 		.cam_wr = F_NONE,
 	},
+    {
+        .id = MALI_GRALLOC_FORMAT_INTERNAL_R8,
+        .cpu_rd = F_LIN,
+        .cpu_wr = F_LIN,
+        .gpu_rd = F_NONE,
+        .gpu_wr = F_NONE,
+        .dpu_rd = F_NONE,
+        .dpu_wr = F_NONE,
+        .dpu_aeu_wr = F_NONE,
+        .vpu_rd = F_NONE,
+        .vpu_wr = F_NONE,
+        .cam_wr = F_NONE,
+    },
 };
+/* clang-format on */
 
 typedef struct
 {
@@ -901,8 +921,14 @@ static const hal_int_fmt hal_to_internal_format[] =
 	{ HAL_PIXEL_FORMAT_Y8,                     MALI_GRALLOC_FORMAT_INTERNAL_Y8 },
 	{ HAL_PIXEL_FORMAT_Y16,                    MALI_GRALLOC_FORMAT_INTERNAL_Y16 },
 	{ HAL_PIXEL_FORMAT_YV12,                   MALI_GRALLOC_FORMAT_INTERNAL_YV12 },
+	{ PIXEL_FORMAT_R8,						   MALI_GRALLOC_FORMAT_INTERNAL_R8 },
 };
 
+#if PLATFORM_SDK_VERSION >= 33
+#include <aidl/android/hardware/graphics/common/PixelFormat.h>
+using aidl::android::hardware::graphics::common::PixelFormat;
+static_assert(static_cast<uint32_t>(PixelFormat::R_8) == PIXEL_FORMAT_R8);
+#endif
 
 const std::vector<format_info_t> &get_all_base_formats()
 {
@@ -932,7 +958,6 @@ const format_info_t *get_format_info(const uint32_t base_format)
 	return nullptr;
 }
 
-
 const format_ip_support_t *get_format_ip_support(const uint32_t base_format)
 {
 	for (const auto &table_entry : formats_ip_support)
@@ -946,7 +971,6 @@ const format_ip_support_t *get_format_ip_support(const uint32_t base_format)
 	MALI_GRALLOC_LOGE("ERROR: IP support not found for format: %" PRIx32, base_format);
 	return nullptr;
 }
-
 
 /*
  * Attempt to map base HAL format to an internal format and
@@ -980,17 +1004,12 @@ uint32_t get_internal_format(const uint32_t base_format)
 	return internal_format;
 }
 
-
 /* Get the dataspace to use based on private usage and format. */
-void get_format_dataspace(const format_info_t *format_info,
-                          uint64_t usage,
-                          int width,
-                          int height,
-                          android_dataspace_t *dataspace,
-                          mali_gralloc_yuv_info *yuv_info)
+void get_format_dataspace(const format_info_t *format_info, uint64_t usage, int width, int height,
+                          android_dataspace_t *dataspace)
 {
 	*dataspace = HAL_DATASPACE_UNKNOWN;
-	*yuv_info = MALI_YUV_NO_INFO;
+
 	if (format_info == nullptr)
 	{
 		return;
@@ -1049,31 +1068,6 @@ void get_format_dataspace(const format_info_t *format_info,
 		}
 
 		*dataspace = static_cast<android_dataspace_t>(color_space | range);
-
-		/* Set deprecated yuv_info field. */
-		switch (color_space)
-		{
-		case HAL_DATASPACE_STANDARD_BT601_625:
-			if (range == HAL_DATASPACE_RANGE_LIMITED)
-			{
-				*yuv_info = MALI_YUV_BT601_NARROW;
-			}
-			else
-			{
-				*yuv_info = MALI_YUV_BT601_WIDE;
-			}
-			break;
-		case HAL_DATASPACE_STANDARD_BT709:
-			if (range == HAL_DATASPACE_RANGE_LIMITED)
-			{
-				*yuv_info = MALI_YUV_BT709_NARROW;
-			}
-			else
-			{
-				*yuv_info = MALI_YUV_BT709_WIDE;
-			}
-			break;
-		}
 	}
 	else if (format_info->is_rgb)
 	{

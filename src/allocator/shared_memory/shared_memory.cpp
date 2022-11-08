@@ -22,7 +22,7 @@
 
 #include "shared_memory.h"
 #include "log.h"
-#include "buffer.h"
+#include "core/buffer.h"
 
 static int create_file(const char *name, uint64_t size)
 {

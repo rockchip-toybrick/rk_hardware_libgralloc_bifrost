@@ -18,21 +18,22 @@
 cc_defaults {
     name: "arm_gralloc_uses_aidl_defaults",
     shared_libs: ["arm.graphics-V3-ndk_platform"],
+    export_shared_lib_headers: ["arm.graphics-V3-ndk_platform"],
 }
 
 cc_defaults {
-	name: "arm_gralloc_capabilities_version_specifics",
-	header_libs: [
-		"libxsdc-utils",
-	],
+    name: "arm_gralloc_capabilities_version_specifics",
+    header_libs: [
+        "libxsdc-utils",
+    ],
 }
 
 cc_defaults {
-	name: "arm_gralloc_xml_configuation_version_specifics",
-	header_libs: [
-		"libxsdc-utils",
-	],
-	export_header_lib_headers: [
-		"libxsdc-utils",
-	],
+    name: "arm_gralloc_xml_configuation_version_specifics",
+    header_libs: [
+        "libxsdc-utils",
+    ],
+    export_header_lib_headers: [
+        "libxsdc-utils",
+    ],
 }

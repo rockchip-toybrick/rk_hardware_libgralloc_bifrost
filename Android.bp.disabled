@@ -16,66 +16,68 @@
  */
 
 soong_config_module_type {
-	name: "arm_gralloc_cc_defaults",
-	module_type: "cc_defaults",
-	config_namespace: "arm_gralloc",
-	variables: [
-		"gralloc_hwc_force_bgra_8888",
-		"gralloc_hwc_fb_disable_afbc",
-	],
-	properties: [
-		"cflags",
-	],
+    name: "arm_gralloc_cc_defaults",
+    module_type: "cc_defaults",
+    config_namespace: "arm_gralloc",
+    variables: [
+        "gralloc_hwc_force_bgra_8888",
+        "gralloc_hwc_fb_disable_afbc",
+    ],
+    properties: [
+        "cflags",
+    ],
 }
 
 soong_config_bool_variable {
-	name: "gralloc_hwc_force_bgra_8888",
+    name: "gralloc_hwc_force_bgra_8888",
 }
+
 soong_config_bool_variable {
-	name: "gralloc_hwc_fb_disable_afbc",
+    name: "gralloc_hwc_fb_disable_afbc",
 }
 
 arm_gralloc_cc_defaults {
-	name: "arm_gralloc_defaults",
-	defaults: ["arm_gralloc_common_defaults"],
-	owner: "arm",
-	vendor: true,
-	proprietary: true,
-	cflags: [
-		"-Wundef",
-		"-Werror",
-		"-DDISABLE_FRAMEBUFFER_HAL=1",
-	],
-	product_variables: {
-		platform_sdk_version: {
-			cflags: ["-DPLATFORM_SDK_VERSION=%d"],
-		},
-	},
-	header_libs: [
-		"libgralloc_headers",
-	],
-	target: {
-		android: {
-			cflags: [
-				"-DGRALLOC_HOST_BUILD=0",
-			],
-		},
-		host: {
-			cflags: [
-				"-DGRALLOC_HOST_BUILD=1",
-			],
-		},
-	},
-	soong_config_variables: {
-		gralloc_hwc_force_bgra_8888: {
-			cflags: [
-				"-DGRALLOC_HWC_FORCE_BGRA_8888=1",
-			],
-		},
-		gralloc_hwc_fb_disable_afbc: {
-			cflags: [
-				"-DGRALLOC_HWC_FB_DISABLE_AFBC=1",
-			],
-		},
-	},
+    name: "arm_gralloc_defaults",
+    defaults: ["arm_gralloc_common_defaults"],
+    owner: "arm",
+    vendor: true,
+    proprietary: true,
+    cflags: [
+        "-Wundef",
+        "-Werror",
+        "-DDISABLE_FRAMEBUFFER_HAL=1",
+        "-Wunused-variable",
+    ],
+    product_variables: {
+        platform_sdk_version: {
+            cflags: ["-DPLATFORM_SDK_VERSION=%d"],
+        },
+    },
+    header_libs: [
+        "libgralloc_headers",
+    ],
+    target: {
+        android: {
+            cflags: [
+                "-DGRALLOC_HOST_BUILD=0",
+            ],
+        },
+        host: {
+            cflags: [
+                "-DGRALLOC_HOST_BUILD=1",
+            ],
+        },
+    },
+    soong_config_variables: {
+        gralloc_hwc_force_bgra_8888: {
+            cflags: [
+                "-DGRALLOC_HWC_FORCE_BGRA_8888=1",
+            ],
+        },
+        gralloc_hwc_fb_disable_afbc: {
+            cflags: [
+                "-DGRALLOC_HWC_FB_DISABLE_AFBC=1",
+            ],
+        },
+    },
 }

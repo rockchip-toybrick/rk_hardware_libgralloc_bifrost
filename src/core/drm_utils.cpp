@@ -64,6 +64,8 @@ const static std::unordered_map<mali_gralloc_internal_format, table_entry> table
 	{ MALI_GRALLOC_FORMAT_INTERNAL_YUV420_8BIT_I, {DRM_FORMAT_YUV420_8BIT, format_colormodel::yuv} },
 	{ MALI_GRALLOC_FORMAT_INTERNAL_YUV420_10BIT_I, {DRM_FORMAT_YUV420_10BIT, format_colormodel::yuv} },
 
+	{ MALI_GRALLOC_FORMAT_INTERNAL_R8, {DRM_FORMAT_R8, format_colormodel::rgb} },
+
 	/* Format introduced in Android P, mapped to MALI_GRALLOC_FORMAT_INTERNAL_P010. */
 	{ HAL_PIXEL_FORMAT_YCBCR_P010, {DRM_FORMAT_P010, format_colormodel::yuv} },
 };
@@ -139,7 +141,8 @@ static uint64_t get_afrc_modifier_tags(const private_handle_t *hnd)
 			modifier |= AFRC_FORMAT_MOD_CU_SIZE_P12(AFRC_FORMAT_MOD_CU_SIZE_16);
 			break;
 		}
-	} else
+	}
+	else
 	{
 		switch (internal_format.get_afrc_rgba_coding_size())
 		{

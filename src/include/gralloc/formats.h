@@ -22,6 +22,9 @@
 
 #include "log.h"
 
+/* Defined in aidl/android/hardware/graphics/common/PixelFormat.aidl */
+#define PIXEL_FORMAT_R8 56
+
 /**
  * @brief Integer type that matches the type of Android's PixelFormat
  */
@@ -122,6 +125,8 @@ typedef enum
 	MALI_GRALLOC_FORMAT_INTERNAL_NV15,
 	MALI_GRALLOC_FORMAT_INTERNAL_NV24,
 
+	MALI_GRALLOC_FORMAT_INTERNAL_R8 = PIXEL_FORMAT_R8,
+
 	MALI_GRALLOC_FORMAT_INTERNAL_RANGE_LAST,
 } mali_gralloc_pixel_format;
 
@@ -134,7 +139,7 @@ typedef enum
 
 /* Utility used to define macros below */
 #define MALI_GRALLOC_INTFMT_EXTENSION_BIT(num_bit) \
-  (((mali_gralloc_internal_format)1) << (MALI_GRALLOC_INTFMT_EXTENSION_BIT_START + (num_bit)))
+	(static_cast<mali_gralloc_internal_format>(1) << (MALI_GRALLOC_INTFMT_EXTENSION_BIT_START + (num_bit)))
 
 /*
  * Compression type
@@ -220,7 +225,8 @@ typedef enum
  * If this is unspecified, the format will use 16 bytes for the RGBA plane coding unit size.
  */
 #define MALI_GRALLOC_INTFMT_AFRC_RGBA_CODING_UNIT_BYTES_SHIFT (MALI_GRALLOC_INTFMT_EXTENSION_BIT_START + 4)
-#define MALI_GRALLOC_INTFMT_AFRC_RGBA_CODING_UNIT_BYTES(x) ((x) << (MALI_GRALLOC_INTFMT_AFRC_RGBA_CODING_UNIT_BYTES_SHIFT))
+#define MALI_GRALLOC_INTFMT_AFRC_RGBA_CODING_UNIT_BYTES(x) \
+	((x) << (MALI_GRALLOC_INTFMT_AFRC_RGBA_CODING_UNIT_BYTES_SHIFT))
 
 /*
  * This format uses 24/32 bytes for the luminance (Y) plane coding unit size.
@@ -234,7 +240,8 @@ typedef enum
  * If this is unspecified, the format will use 16 bytes for the coding unit size for the U and V planes.
  */
 #define MALI_GRALLOC_INTFMT_AFRC_CHROMA_CODING_UNIT_BYTES_SHIFT (MALI_GRALLOC_INTFMT_EXTENSION_BIT_START + 6)
-#define MALI_GRALLOC_INTFMT_AFRC_CHROMA_CODING_UNIT_BYTES(x) ((x) << (MALI_GRALLOC_INTFMT_AFRC_CHROMA_CODING_UNIT_BYTES_SHIFT))
+#define MALI_GRALLOC_INTFMT_AFRC_CHROMA_CODING_UNIT_BYTES(x) \
+	((x) << (MALI_GRALLOC_INTFMT_AFRC_CHROMA_CODING_UNIT_BYTES_SHIFT))
 
 /*
  * Bit 8 is unused for AFRC.
@@ -245,7 +252,7 @@ typedef enum
  * Avoid using us directly; use the helper macros defined below instead.
  */
 #define GRALLOC_PRIVATE_FORMAT_WRAPPER_AFRC(x, modifiers) \
-        mali_gralloc_format_wrapper((x), (MALI_GRALLOC_INTFMT_AFRC_BASIC | (modifiers)))
+	mali_gralloc_format_wrapper((x), (MALI_GRALLOC_INTFMT_AFRC_BASIC | (modifiers)))
 
 /*
  * Helper macros for marking/wrapping base formats as AFRC-encoded formats.
@@ -258,28 +265,29 @@ typedef enum
  *     MALI_GRALLOC_INTFMT_AFRC_CODING_UNIT_BYTES_16
  * );
  */
-#define GRALLOC_PRIVATE_FORMAT_WRAPPER_AFRC_DEFAULT(hal_format) \
-        GRALLOC_PRIVATE_FORMAT_WRAPPER_AFRC(hal_format, 0)
+#define GRALLOC_PRIVATE_FORMAT_WRAPPER_AFRC_DEFAULT(hal_format) GRALLOC_PRIVATE_FORMAT_WRAPPER_AFRC(hal_format, 0)
 
 #define GRALLOC_PRIVATE_FORMAT_WRAPPER_AFRC_RGBA_SCAN(hal_format, afrc_rgba_coding_unit_bytes) \
-        GRALLOC_PRIVATE_FORMAT_WRAPPER_AFRC(hal_format, \
-                                            MALI_GRALLOC_INTFMT_AFRC_RGBA_CODING_UNIT_BYTES(afrc_rgba_coding_unit_bytes))
+	GRALLOC_PRIVATE_FORMAT_WRAPPER_AFRC(hal_format,                                            \
+	                                    MALI_GRALLOC_INTFMT_AFRC_RGBA_CODING_UNIT_BYTES(afrc_rgba_coding_unit_bytes))
 
 #define GRALLOC_PRIVATE_FORMAT_WRAPPER_AFRC_RGBA_ROT(hal_format, afrc_rgba_coding_unit_bytes) \
-        GRALLOC_PRIVATE_FORMAT_WRAPPER_AFRC(hal_format, \
-                                            MALI_GRALLOC_INTFMT_AFRC_ROT_LAYOUT | \
-                                            MALI_GRALLOC_INTFMT_AFRC_RGBA_CODING_UNIT_BYTES(afrc_rgba_coding_unit_bytes))
+	GRALLOC_PRIVATE_FORMAT_WRAPPER_AFRC(                                                      \
+	    hal_format, MALI_GRALLOC_INTFMT_AFRC_ROT_LAYOUT |                                     \
+	                    MALI_GRALLOC_INTFMT_AFRC_RGBA_CODING_UNIT_BYTES(afrc_rgba_coding_unit_bytes))
 
-#define GRALLOC_PRIVATE_FORMAT_WRAPPER_AFRC_YUV_SCAN(hal_format, afrc_luma_coding_unit_bytes, afrc_chroma_coding_unit_bytes) \
-        GRALLOC_PRIVATE_FORMAT_WRAPPER_AFRC(hal_format, \
-                                            MALI_GRALLOC_INTFMT_AFRC_LUMA_CODING_UNIT_BYTES(afrc_luma_coding_unit_bytes) | \
-                                            MALI_GRALLOC_INTFMT_AFRC_CHROMA_CODING_UNIT_BYTES(afrc_chroma_coding_unit_bytes))
+#define GRALLOC_PRIVATE_FORMAT_WRAPPER_AFRC_YUV_SCAN(hal_format, afrc_luma_coding_unit_bytes,      \
+                                                     afrc_chroma_coding_unit_bytes)                \
+	GRALLOC_PRIVATE_FORMAT_WRAPPER_AFRC(                                                           \
+	    hal_format, MALI_GRALLOC_INTFMT_AFRC_LUMA_CODING_UNIT_BYTES(afrc_luma_coding_unit_bytes) | \
+	                    MALI_GRALLOC_INTFMT_AFRC_CHROMA_CODING_UNIT_BYTES(afrc_chroma_coding_unit_bytes))
 
-#define GRALLOC_PRIVATE_FORMAT_WRAPPER_AFRC_YUV_ROT(hal_format, afrc_luma_coding_unit_bytes, afrc_chroma_coding_unit_bytes) \
-        GRALLOC_PRIVATE_FORMAT_WRAPPER_AFRC(hal_format, \
-                                            MALI_GRALLOC_INTFMT_AFRC_ROT_LAYOUT | \
-                                            MALI_GRALLOC_INTFMT_AFRC_LUMA_CODING_UNIT_BYTES(afrc_luma_coding_unit_bytes) | \
-                                            MALI_GRALLOC_INTFMT_AFRC_CHROMA_CODING_UNIT_BYTES(afrc_chroma_coding_unit_bytes))
+#define GRALLOC_PRIVATE_FORMAT_WRAPPER_AFRC_YUV_ROT(hal_format, afrc_luma_coding_unit_bytes,           \
+                                                    afrc_chroma_coding_unit_bytes)                     \
+	GRALLOC_PRIVATE_FORMAT_WRAPPER_AFRC(                                                               \
+	    hal_format, MALI_GRALLOC_INTFMT_AFRC_ROT_LAYOUT |                                              \
+	                    MALI_GRALLOC_INTFMT_AFRC_LUMA_CODING_UNIT_BYTES(afrc_luma_coding_unit_bytes) | \
+	                    MALI_GRALLOC_INTFMT_AFRC_CHROMA_CODING_UNIT_BYTES(afrc_chroma_coding_unit_bytes))
 
 /**
  * @brief Internal function that remaps some HAL formats to ensure they fit in the mask @c MALI_GRALLOC_INTFMT_FMT_MASK
@@ -388,8 +396,7 @@ static inline bool mali_gralloc_format_is_block_linear(mali_gralloc_internal_for
  * Macro to add additional modifier(s) to existing wrapped private format.
  * Arguments include wrapped private format and new modifier(s) to add.
  */
-#define GRALLOC_PRIVATE_FORMAT_WRAPPER_ADD_MODIFIER(x, modifiers) \
-	((int)((x) | (unsigned)(modifiers)))
+#define GRALLOC_PRIVATE_FORMAT_WRAPPER_ADD_MODIFIER(x, modifiers) ((int)((x) | (unsigned)(modifiers)))
 
 /*
  * Macro to remove modifier(s) to existing wrapped private format.
@@ -403,7 +410,7 @@ static inline bool mali_gralloc_format_is_block_linear(mali_gralloc_internal_for
 #define GRALLOC_PRIVATE_FORMAT_WRAPPER_BLOCK_LINEAR(x) \
 	mali_gralloc_format_wrapper(x, MALI_GRALLOC_INTFMT_BLOCK_LINEAR_BASIC)
 
-#define GRALLOC_PRIVATE_FORMAT_WRAPPER_AFBC(x)                                                         \
+#define GRALLOC_PRIVATE_FORMAT_WRAPPER_AFBC(x) \
 	mali_gralloc_format_wrapper(x, (MALI_GRALLOC_INTFMT_AFBC_BASIC | MALI_GRALLOC_INTFMT_AFBC_SPARSE))
 
 #define GRALLOC_PRIVATE_FORMAT_WRAPPER_AFBC_SPLITBLK(x)                                 \
@@ -481,5 +488,5 @@ const mali_gralloc_ip MALI_GRALLOC_IP_CAM = 1 << 5;
  * @param consumers    Gralloc consumers
  * @param feature_name Name of the capability feature
  */
-typedef bool (*mali_gralloc_ip_supports_feature_ptr)(
-	mali_gralloc_ip producers, mali_gralloc_ip consumers, const char *feature_name);
+typedef bool (*mali_gralloc_ip_supports_feature_ptr)(mali_gralloc_ip producers, mali_gralloc_ip consumers,
+                                                     const char *feature_name);

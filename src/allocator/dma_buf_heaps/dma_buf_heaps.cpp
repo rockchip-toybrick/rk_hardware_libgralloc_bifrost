@@ -143,9 +143,9 @@ int allocator_allocate(const buffer_descriptor_t *descriptor, private_handle_t *
 	}
 
 	*out_handle = make_private_handle(
-	    0, descriptor->size,
+	    descriptor->size,
 	    descriptor->consumer_usage, descriptor->producer_usage, std::move(fd), descriptor->hal_format,
-	    descriptor->alloc_format, descriptor->width, descriptor->height, descriptor->size, descriptor->layer_count,
+	    descriptor->alloc_format, descriptor->width, descriptor->height, descriptor->layer_count,
 	    descriptor->plane_info, descriptor->pixel_stride);
 	if (nullptr == *out_handle)
 	{

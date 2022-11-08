@@ -30,7 +30,6 @@
 #include "buffer_allocation.h"
 #include "allocator/allocator.h"
 #include "allocator/shared_memory/shared_memory.h"
-#include "private_interface_types.h"
 #include "buffer.h"
 #include "buffer_descriptor.h"
 #include "log.h"
@@ -591,7 +590,7 @@ static void update_yv12_stride(int8_t plane,
  * @param height          [in]    Buffer height.
  * @param alloc_type      [in]    Allocation type inc. whether tiled and/or multi-plane.
  * @param format          [in]    Pixel format.
- * @param has_cpu_usage   [in]    CPU usage requested (in addition to any other).
+ * @param usage           [in]    The usage flags requested.
  * @param pixel_stride    [out]   Calculated pixel stride.
  * @param is_stride_specified 
  *			  [in]	  待分配的 buffer 是否被具体指定了, 和 RK_GRALLOC_USAGE_SPECIFY_STRIDE 有关.
@@ -610,8 +609,7 @@ static void calc_allocation_size(const int width,
                                  const int height,
                                  const alloc_type_t alloc_type,
                                  const format_info_t format,
-                                 const bool has_cpu_usage,
-                                 const bool has_hw_usage,
+								 const uint64_t usage,
 				 const bool is_stride_specified,
 				 const uint64_t usage_flag_for_stride_alignment,
                                  int * const pixel_stride,
@@ -619,6 +617,9 @@ static void calc_allocation_size(const int width,
                                  plane_layout &plane_info)
 {
 	plane_info[0].offset = 0;
+
+	bool has_cpu_usage = usage & (GRALLOC_USAGE_SW_READ_MASK | GRALLOC_USAGE_SW_WRITE_MASK);
+	bool has_hw_usage = usage & ~(GRALLOC_USAGE_PRIVATE_MASK | GRALLOC_USAGE_SW_READ_MASK | GRALLOC_USAGE_SW_WRITE_MASK | GRALLOC_USAGE_FRONTBUFFER);
 
 	*size = 0;
 	for (uint8_t plane = 0; plane < format.npln; plane++)
@@ -1000,7 +1001,6 @@ static bool validate_format(const format_info_t * const format,
 
 int mali_gralloc_derive_format_and_size(buffer_descriptor_t *descriptor)
 {
-	int err;
 
 	int alloc_width = descriptor->width;
 	int alloc_height = descriptor->height;
@@ -1011,9 +1011,7 @@ int mali_gralloc_derive_format_and_size(buffer_descriptor_t *descriptor)
 	* Select optimal internal pixel format based upon
 	* usage and requested format.
 	*/
-	bufDescriptor->alloc_format = mali_gralloc_select_format(bufDescriptor->hal_format,
-	                                                         usage,
-	                                                         bufDescriptor->width * bufDescriptor->height);
+	descriptor->alloc_format = mali_gralloc_select_format(*descriptor, usage);
 
 	if ( ( (bufDescriptor->alloc_format.get_value() == 0x30
 				|| bufDescriptor->alloc_format.get_value() == 0x31
@@ -1075,8 +1073,7 @@ int mali_gralloc_derive_format_and_size(buffer_descriptor_t *descriptor)
 	                     alloc_height,
 	                     *alloc_type,
 	                     *format_info,
-	                     usage & (GRALLOC_USAGE_SW_READ_MASK | GRALLOC_USAGE_SW_WRITE_MASK), // 'has_cpu_usage'
-	                     usage & ~(GRALLOC_USAGE_PRIVATE_MASK | GRALLOC_USAGE_SW_READ_MASK | GRALLOC_USAGE_SW_WRITE_MASK), // 'has_hw_usage'
+						 usage,
 			     usage & RK_GRALLOC_USAGE_SPECIFY_STRIDE, // 'is_stride_specified'
 			     get_usage_flag_for_stride_alignment(usage),
 	                     &descriptor->pixel_stride,

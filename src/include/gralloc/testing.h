@@ -24,9 +24,9 @@
 
 /* The macros below are an implementation detail and are not expected to be used directly. */
 #define MALI_GRALLOC_HANDLE_WIDTH_TYPE int
-#define MALI_GRALLOC_HANDLE_WIDTH_OFFSET (sizeof(native_handle_t) + 16)
+#define MALI_GRALLOC_HANDLE_WIDTH_OFFSET (sizeof(native_handle_t) + 12)
 #define MALI_GRALLOC_HANDLE_HEIGHT_TYPE int
-#define MALI_GRALLOC_HANDLE_HEIGHT_OFFSET (sizeof(native_handle_t) + 20)
+#define MALI_GRALLOC_HANDLE_HEIGHT_OFFSET (sizeof(native_handle_t) + 16)
 
 /**
  * @brief Write the width and height members of a Gralloc native_handle_t (only for testing purposes.)

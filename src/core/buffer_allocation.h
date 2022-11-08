@@ -18,7 +18,6 @@
 #pragma once
 
 #include <hardware/hardware.h>
-#include "private_interface_types.h"
 #include "buffer.h"
 #include "core/buffer_descriptor.h"
 #include "usages.h"

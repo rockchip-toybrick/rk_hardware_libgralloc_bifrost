@@ -25,7 +25,8 @@
 #include <sstream>
 
 #include "gralloc/formats.h"
-#include "format_info.h"
+
+struct format_info_t;
 
 /**
  * @brief Coding size to be used for AFRC compression formats.
@@ -104,35 +105,18 @@ public:
 	 * @return An internal format with the modifiers set as encoded in the private format.
 	 *   If @p private_format is invalid this function returns @c internal_format_t::invalid
 	 */
-	static internal_format_t from_private(mali_gralloc_android_format private_format)
-	{
-		/* Clean the sentinel bit as it has no purpose after this point. */
-		auto fmt = (static_cast<mali_gralloc_internal_format>(private_format) &
-		            ~static_cast<mali_gralloc_internal_format>(MALI_GRALLOC_INTFMT_SENTINEL));
-		return internal_format_t(fmt);
-	}
+	static internal_format_t from_private(mali_gralloc_android_format private_format);
 
 	/**
 	 * @brief Construct an invalid format.
 	 */
 	constexpr internal_format_t() = default;
 
-	mali_gralloc_android_format get_base() const
-	{
-		return mali_gralloc_format_get_base(m_format);
-	}
+	mali_gralloc_android_format get_base() const;
 
-	const format_info_t *get_base_info() const
-	{
-		return get_format_info(get_base());
-	}
+	const format_info_t *get_base_info() const;
 
-	const format_info_t &base_info() const
-	{
-		auto *ret = get_base_info();
-		CHECK(ret != nullptr) << "Attempted access to base info for invalid format";
-		return *ret;
-	}
+	const format_info_t &base_info() const;
 
 	/**
 	 * @brief Get the modifiers as defined in gralloc/format.h
@@ -158,11 +142,6 @@ public:
 	void clear_modifiers()
 	{
 		m_modifiers = 0;
-	}
-
-	mali_gralloc_internal_format get_value() const
-	{
-		return m_format | m_modifiers;
 	}
 
 	bool is_undefined() const
@@ -376,7 +355,7 @@ inline constexpr internal_format_t internal_format_t::invalid = internal_format_
 inline std::ostream& operator<<(std::ostream& os, internal_format_t format)
 {
 	auto flags = os.flags();
-	os << std::showbase << std::hex << format.get_value();
+	os << std::showbase << std::hex << "FMT:" << format.m_format << ",MOD:" << format.m_modifiers;
 	os.flags(flags);
 	return os;
 }

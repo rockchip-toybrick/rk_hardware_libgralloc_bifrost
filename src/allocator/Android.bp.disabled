@@ -16,55 +16,56 @@
  */
 
 soong_config_module_type {
-	name: "arm_gralloc_allocator_cc_defaults",
-	module_type: "cc_defaults",
-	config_namespace: "arm_gralloc",
-	variables: [
-		"gralloc_use_ion_dma_heap",
-		"gralloc_use_contiguous_display_memory",
-	],
-	properties: [
-		"cflags",
-	],
+    name: "arm_gralloc_allocator_cc_defaults",
+    module_type: "cc_defaults",
+    config_namespace: "arm_gralloc",
+    variables: [
+        "gralloc_use_ion_dma_heap",
+        "gralloc_use_contiguous_display_memory",
+    ],
+    properties: [
+        "cflags",
+    ],
 }
 
 soong_config_bool_variable {
-	name: "gralloc_use_ion_dma_heap",
+    name: "gralloc_use_ion_dma_heap",
 }
+
 soong_config_bool_variable {
-	name: "gralloc_use_contiguous_display_memory",
+    name: "gralloc_use_contiguous_display_memory",
 }
 
 arm_gralloc_allocator_cc_defaults {
-	name: "arm_gralloc_allocator_defaults",
-	defaults: [
-		"arm_gralloc_defaults",
-	],
-	soong_config_variables: {
-		gralloc_use_ion_dma_heap: {
-			cflags: [
-				"-DGRALLOC_USE_ION_DMA_HEAP=1",
-			],
-		},
-		gralloc_use_contiguous_display_memory: {
-			cflags: [
-				"-DGRALLOC_USE_CONTIGUOUS_DISPLAY_MEMORY=1",
-			],
-		},
-	},
-	static_libs: [
-		"libarect",
-	],
-	shared_libs: [
-		"libhardware",
-		"liblog",
-		"libcutils",
-		"libion",
-		"libsync",
-		"libutils",
-		"libnativewindow",
-	],
-	header_libs: [
-		"libnativebase_headers",
-	],
+    name: "arm_gralloc_allocator_defaults",
+    defaults: [
+        "arm_gralloc_defaults",
+    ],
+    soong_config_variables: {
+        gralloc_use_ion_dma_heap: {
+            cflags: [
+                "-DGRALLOC_USE_ION_DMA_HEAP=1",
+            ],
+        },
+        gralloc_use_contiguous_display_memory: {
+            cflags: [
+                "-DGRALLOC_USE_CONTIGUOUS_DISPLAY_MEMORY=1",
+            ],
+        },
+    },
+    static_libs: [
+        "libarect",
+    ],
+    shared_libs: [
+        "libhardware",
+        "liblog",
+        "libcutils",
+        "libion",
+        "libsync",
+        "libutils",
+        "libnativewindow",
+    ],
+    header_libs: [
+        "libnativebase_headers",
+    ],
 }

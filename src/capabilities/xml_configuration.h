@@ -19,6 +19,7 @@
 #include <string_view>
 
 #include "gralloc/formats.h"
+#include "capabilities.h"
 #include "capabilities_type.h"
 
 /*
@@ -33,19 +34,34 @@ public:
 		write
 	};
 
-	ip_capability(mali_gralloc_ip ip, const char *base_name);
-	ip_capability(mali_gralloc_ip ip, const char *base_name, std::string_view base_path);
+	/**
+	 * @brief Construct a new capability for specific IP and use a predefined
+	 *        default path to look for capability files
+	 *
+	 * @param ip The Gralloc IP for which the capabilities will be loaded.
+	 */
+	ip_capability(mali_gralloc_ip ip);
+
+	/**
+	 * @brief Construct a new capability for specific IP
+	 *
+	 * @param ip The Gralloc IP for which the capabilities will be loaded.
+	 * @param base_path The directory to use for capability file lookup.
+	 *
+	 * Note: The @a base_path will not be iterated recursively.
+	 */
+	ip_capability(mali_gralloc_ip ip, const std::string &base_path);
 
 	/*
 	 * @brief Check if a feature is supported by the ip.
 	 *
-	 * @param feature Feature's name.
+	 * @param feature Feature.
 	 * @param perm    Requested permission for the feature.
 	 *
 	 * @return true if the feature is supported with the given permission,
 	 *         false otherwise.
 	 */
-	bool is_feature_supported(const std::string &feature, permission_t permission);
+	bool is_feature_supported(feature_t feature, permission_t permission);
 
 	mali_gralloc_ip get_ip()
 	{
@@ -63,7 +79,12 @@ public:
 	}
 
 private:
+	capabilities_type::Ip convert_gralloc_ip_to_capabilities_type_ip(mali_gralloc_ip ip);
+
+	std::optional<std::pair<std::string, capabilities_type::IpCapabilities>> find_ip_capabilities(const std::string &base_path);
+	std::optional<capabilities_type::IpCapabilities> find_ip_capabilities_in_config(capabilities_type::Capabilities &caps);
+
 	mali_gralloc_ip m_ip;
 	std::string m_path;
-	std::optional<capabilities_type::Capabilities> m_caps;
+	std::optional<capabilities_type::IpCapabilities> m_caps;
 };

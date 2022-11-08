@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Arm Limited.
+ * Copyright (C) 2021-2022 Arm Limited.
  * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,10 +20,10 @@
  * debug builds.
  */
 cc_defaults {
-	name: "arm_gralloc_build_defaults",
-	cflags: [
-		"-UNDEBUG",
-		"-g",
-		"-O0",
-	]
+    name: "arm_gralloc_build_defaults",
+    cflags: [
+        "-UNDEBUG",
+        "-g",
+        "-O0",
+    ],
 }

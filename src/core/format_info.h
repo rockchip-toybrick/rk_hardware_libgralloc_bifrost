@@ -47,7 +47,7 @@ typedef struct
  * These properties are used by gralloc for buffer allocation.
  * Each format is uniquely identified with 'id'.
  */
-typedef struct
+struct format_info_t
 {
 	uint32_t id;                    /* Format ID. */
 	uint8_t npln;                   /* Number of planes. */
@@ -82,7 +82,7 @@ typedef struct
 		}
 		return sum;
 	}
-} format_info_t;
+};
 
 /* Returns true if the formats are the same or if they only differ with respect to the order of components.
 	False otherwise. */
@@ -121,5 +121,4 @@ void get_format_dataspace(const format_info_t *info,
                           uint64_t usage,
                           int width,
                           int height,
-                          android_dataspace_t *dataspace,
-                          mali_gralloc_yuv_info *yuv_info);
+                          android_dataspace_t *dataspace);

@@ -16,62 +16,63 @@
  */
 
 cc_library_static {
-	name: "libgralloc_capabilities",
-	generated_headers: [
-		"capabilities_type",
-	],
-	defaults: [
-		"arm_gralloc_capabilities_defaults",
-		"arm_gralloc_version_defaults",
-	],
+    name: "libgralloc_capabilities",
+    generated_headers: [
+        "capabilities_type",
+    ],
+    defaults: [
+        "arm_gralloc_capabilities_defaults",
+        "arm_gralloc_version_defaults",
+    ],
 }
 
 cc_library_static {
-	name: "libgralloc_xml_configuration",
-	defaults: [
-		"arm_gralloc_xml_configuation_defaults",
-	],
-}
-
-cc_library_host_static {
-	name: "libgralloc_xml_configuration_host",
-	defaults: [
-		"arm_gralloc_xml_configuation_defaults",
-	],
+    name: "libgralloc_xml_configuration",
+    defaults: [
+        "arm_gralloc_xml_configuration_defaults",
+    ],
 }
 
 cc_defaults {
-	name: "arm_gralloc_capabilities_defaults",
-	defaults: [
-		"arm_gralloc_defaults",
-		"arm_gralloc_capabilities_version_specifics",
-	],
-	srcs: [
-		"capabilities.cpp",
-	],
-	shared_libs: [
-		"liblog",
-		"libxml2",
-	],
+    name: "arm_gralloc_capabilities_defaults",
+    defaults: [
+        "arm_gralloc_defaults",
+        "arm_gralloc_capabilities_version_specifics",
+    ],
+    srcs: [
+        "capabilities.cpp",
+    ],
+    shared_libs: [
+        "liblog",
+        "libxml2",
+    ],
+}
+
+filegroup {
+    name: "arm_gralloc_xml_configuration_defaults_srcs",
+    srcs: [
+        "xml_configuration.cpp",
+    ],
 }
 
 cc_defaults {
-	name: "arm_gralloc_xml_configuation_defaults",
-	defaults: [
-		"arm_gralloc_defaults",
-		"arm_gralloc_xml_configuation_version_specifics",
-	],
-	srcs: [
-		"xml_configuration.cpp",
-	],
-	shared_libs: [
-		"liblog",
-		"libxml2",
-	],
-	generated_headers: [
-		"capabilities_type",
-	],
-	generated_sources: [
-		"capabilities_type",
-	],
+    name: "arm_gralloc_xml_configuration_defaults",
+    defaults: [
+        "arm_gralloc_defaults",
+        "arm_gralloc_xml_configuation_version_specifics",
+        "arm_gralloc_version_defaults",
+    ],
+    srcs: [
+        ":arm_gralloc_xml_configuration_defaults_srcs",
+    ],
+    shared_libs: [
+        "liblog",
+        "libxml2",
+    ],
+    generated_headers: [
+        "capabilities_type",
+    ],
+    generated_sources: [
+        "capabilities_type",
+    ],
 }

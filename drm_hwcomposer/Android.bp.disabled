@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Arm Limited.
+ * Copyright (C) 2021-2022 Arm Limited.
  * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,15 +16,16 @@
  */
 
 cc_library_shared {
-	name: "hwcomposer.drm_mappermetadata",
-	defaults: [
-		"hwcomposer.drm_defaults",
-		"arm_gralloc_uses_aidl_defaults",
-	],
-	srcs: ["BufferInfoMapperMetadata.cpp"],
-	whole_static_libs: ["drm_hwcomposer"],
-	shared_libs: [
-		"libgralloctypes",
-		"android.hardware.graphics.mapper@4.0",
-	],
+    name: "hwcomposer.drm_mappermetadata",
+    defaults: [
+        "hwcomposer.drm_defaults",
+        "arm_gralloc_uses_aidl_defaults",
+        "arm_gralloc_vintf_composer_defaults",
+    ],
+    srcs: ["BufferInfoMapperMetadata.cpp"],
+    whole_static_libs: ["drm_hwcomposer"],
+    shared_libs: [
+        "libgralloctypes",
+        "android.hardware.graphics.mapper@4.0",
+    ],
 }

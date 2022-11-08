@@ -23,7 +23,6 @@
 #include <hardware/gralloc1.h>
 
 #include "buffer_access.h"
-#include "private_interface_types.h"
 #include "buffer.h"
 #include "gralloc/formats.h"
 #include "usages.h"
@@ -42,11 +41,10 @@ enum tx_direction
 /* Mutex used to ensure the buffer map/unmap actions are synchronized */
 static std::mutex g_map_mutex;
 
-private_handle_t *make_private_handle(int flags, int size, uint64_t consumer_usage, uint64_t producer_usage,
+private_handle_t *make_private_handle(int size, uint64_t consumer_usage, uint64_t producer_usage,
                                       android::base::unique_fd shared_fd, int required_format,
                                       internal_format_t allocated_format, int width, int height,
-                                      int backing_store_size, int layer_count,
-                                      const plane_layout &plane_info, int stride)
+                                      int layer_count, const plane_layout &plane_info, int stride)
 {
 	void *mem = native_handle_create(PRIVATE_HANDLE_NUM_FDS, PRIVATE_HANDLE_NUM_INTS);
 	if (mem == nullptr)
@@ -55,14 +53,13 @@ private_handle_t *make_private_handle(int flags, int size, uint64_t consumer_usa
 		return nullptr;
 	}
 
-	return new (mem)
-	    private_handle_t(flags, size, consumer_usage, producer_usage, shared_fd.release(), required_format,
-	                     allocated_format.get_value(), width, height, backing_store_size, layer_count, plane_info, stride);
+	return new (mem) private_handle_t(size, consumer_usage, producer_usage, shared_fd.release(), required_format,
+	                                  allocated_format, width, height, layer_count, plane_info, stride);
 }
 
 internal_format_t private_handle_t::get_alloc_format() const
 {
-	return internal_format_t::from_private(alloc_format);
+	return alloc_format;
 }
 
 static enum tx_direction get_tx_direction(const uint64_t usage)
@@ -185,13 +182,10 @@ int validate_lock_input_parameters(const buffer_handle_t buffer, const int l,
 	}
 #endif
 
-	/* Locking process should have a valid buffer virtual address. A process
-	 * will have a valid buffer virtual address if it is the allocating
-	 * process or it retained / registered a cloned buffer handle
-	 */
-	if ((hnd->allocating_pid != lock_pid) && (hnd->remote_pid != lock_pid))
+	/* Locking process must call importBuffer first */
+	if (hnd->import_pid != lock_pid)
 	{
-		MALI_GRALLOC_LOG(ERROR) << "The buffer must be retained before lock request";
+		MALI_GRALLOC_LOG(ERROR) << "Attempt to lock buffer before importBuffer";
 		return -EINVAL;
 	}
 

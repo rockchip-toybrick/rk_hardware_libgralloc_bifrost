@@ -30,6 +30,8 @@ PLATFORM_VERSION=0
 TARGET_BUILD="release"
 ENABLE_HWC=0
 ENABLE_PRIVATE_FORMATS=1
+ENABLE_VINTF=0
+USE_LEGACY_ALLOCATOR=0
 
 # In a lunched shell auto detect the Android version.
 if [ ! -z $ANDROID_BUILD_TOP ]; then
@@ -41,6 +43,10 @@ if [ ! -z $ANDROID_BUILD_TOP ]; then
     fi
 fi
 
+if [ ! -z $ANDROID_BUILD_TOP ] && [ $PLATFORM_VERSION -eq 13 ]; then
+    ENABLE_VINTF=1
+fi
+
 SELECTED_PLATFORM=0
 for arg in "$@"; do
     case $arg in
@@ -49,6 +55,9 @@ for arg in "$@"; do
         ;;
     ANDROID_12=y)
         SELECTED_PLATFORM=12
+        ;;
+    ANDROID_13=y)
+        SELECTED_PLATFORM=13
         ;;
     DEBUG=y)
         TARGET_BUILD="debug"
@@ -61,6 +70,15 @@ for arg in "$@"; do
         ;;
     DRM_HWC=y)
         ENABLE_HWC=1
+        ;;
+    VINTF=y)
+        ENABLE_VINTF=1
+        ;;
+    VINTF=n)
+        ENABLE_VINTF=0
+        ;;
+    LEGACY_ALLOCATOR=y)
+        USE_LEGACY_ALLOCATOR=1
         ;;
     *)
         echo "$arg ignored"
@@ -104,7 +122,9 @@ COMMON_FILES="Android.bp.disabled
               src/allocator/shared_memory/Android.bp.disabled
               src/core/Android.bp.disabled
               src/capabilities/Android.bp.disabled
-              src/hidl_common/Android.bp.disabled"
+              src/idl_common/allocator/Android.bp.disabled
+              src/idl_common/mapper/Android.bp.disabled
+              src/idl_common/gralloc_shared/Android.bp.disabled"
 
 # Blueprint files for tests
 if [ -d tests ]; then
@@ -122,16 +142,41 @@ GRALLOC4_FILES="${AIDL_FILES}
                 ${TEST_FILES}
                 ${VERSION_FILES}
                 ${CAPS_FILES}
-                service/4.x/Android.bp.disabled
-                src/4.x/Android.bp.disabled"
+                src/4.x/Android.bp.disabled
+                src/4.x/mapper/Android.bp.disabled"
+
+GRALLOC4_HIDL_ALLOCATOR="src/4.x/allocator/Android.bp.disabled
+                         service/4.x/Android.bp.disabled"
+
+GRALLOC_AIDL_V1_ALLOCATOR_FILES="service/aidl/1.x/Android.bp.disabled src/aidl/1.x/Android.bp.disabled"
+
 
 for FILE in $GRALLOC4_FILES; do
     enable "${FILE}"
 done
 
+if [ $PLATFORM_VERSION -lt 13 ] || [ $USE_LEGACY_ALLOCATOR -eq 1 ]; then
+for FILE in $GRALLOC4_HIDL_ALLOCATOR; do
+    enable "${FILE}"
+done
+else
+for FILE in $GRALLOC_AIDL_V1_ALLOCATOR_FILES; do
+    enable "${FILE}"
+done
+fi
+
 if [ $ENABLE_HWC -eq 1 ]; then
     echo "Enabling Gralloc support for drm_hwcomposer"
     enable "drm_hwcomposer/Android.bp.disabled"
+fi
+
+if [ $ENABLE_VINTF -eq 1 ]; then
+    echo "Enabling Gralloc vintf fragments"
+    touch "build_vintf/vintf_enabled"
+    enable "build_vintf/Android.bp.disabled.vintf"
+else
+    rm -f "build_vintf/vintf_enabled"
+    enable "build_vintf/Android.bp.disabled.no_vintf"
 fi
 
 if [ $PLATFORM_VERSION -eq 11 ]; then
@@ -143,5 +188,6 @@ if [ $PLATFORM_VERSION -ge 12 ]; then
     # Enable dma_buf heaps
     enable "src/allocator/dma_buf_heaps/Android.bp.disabled"
 fi
+
 
 command popd > /dev/null

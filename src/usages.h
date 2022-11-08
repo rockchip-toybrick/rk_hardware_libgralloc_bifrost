@@ -20,8 +20,8 @@
 
 #include <assert.h>
 
-#ifndef GRALLOC_VERSION_MAJOR
-#error "GRALLOC_VERSION_MAJOR must be defined."
+#if GRALLOC_ALLOCATOR_AIDL_VERSION > 0
+#include <aidl/android/hardware/graphics/common/BufferUsage.h>
 #endif
 
 #define GRALLOC_USAGE_PRIVATE_MASK (0xffff0000f0000000U)
@@ -33,8 +33,7 @@
  * The overlapping is handled by processing the definitions
  * in a specific order.
  *
- * MALI_GRALLOC_USAGE_PRIVATE_FORMAT and MALI_GRALLOC_USAGE_NO_AFBC
- * don't overlap and are processed first.
+ * MALI_GRALLOC_USAGE_NO_AFBC is processed first.
  *
  * MALI_GRALLOC_USAGE_YUV_CONF are only for YUV formats and clients
  * using MALI_GRALLOC_USAGE_NO_AFBC must never allocate YUV formats.
@@ -119,13 +118,11 @@ typedef enum
 
 	MALI_GRALLOC_USAGE_AFBC_PADDING = GRALLOC_USAGE_PRIVATE_14,
 
-	MALI_GRALLOC_USAGE_PRIVATE_FORMAT = GRALLOC_USAGE_PRIVATE_15,
-
 	/* YUV-only. */
 	MALI_GRALLOC_USAGE_YUV_COLOR_SPACE_DEFAULT = 0,
 	MALI_GRALLOC_USAGE_YUV_COLOR_SPACE_BT601 = GRALLOC_USAGE_PRIVATE_18,
 	MALI_GRALLOC_USAGE_YUV_COLOR_SPACE_BT709 = GRALLOC_USAGE_PRIVATE_19,
-	MALI_GRALLOC_USAGE_YUV_COLOR_SPACE_BT2020 =  (GRALLOC_USAGE_PRIVATE_18 | GRALLOC_USAGE_PRIVATE_19),
+	MALI_GRALLOC_USAGE_YUV_COLOR_SPACE_BT2020 = (GRALLOC_USAGE_PRIVATE_18 | GRALLOC_USAGE_PRIVATE_19),
 	MALI_GRALLOC_USAGE_YUV_COLOR_SPACE_MASK = MALI_GRALLOC_USAGE_YUV_COLOR_SPACE_BT2020,
 
 	MALI_GRALLOC_USAGE_RANGE_DEFAULT = 0,
@@ -137,11 +134,11 @@ typedef enum
 	 * to the Vulkan swapchain implementation.
 	 */
 	MALI_GRALLOC_USAGE_AFRC_RGBA_LUMA_CODING_SIZE_DEFAULT = 0,
-	MALI_GRALLOC_USAGE_AFRC_RGBA_LUMA_CODING_SIZE_16 = (GRALLOC_USAGE_PRIVATE_2 | GRALLOC_USAGE_PRIVATE_0),
-	MALI_GRALLOC_USAGE_AFRC_RGBA_LUMA_CODING_SIZE_24 = (GRALLOC_USAGE_PRIVATE_2 | GRALLOC_USAGE_PRIVATE_1),
-	MALI_GRALLOC_USAGE_AFRC_RGBA_LUMA_CODING_SIZE_32 = GRALLOC_USAGE_PRIVATE_2,
-	MALI_GRALLOC_USAGE_AFRC_RGBA_LUMA_CODING_SIZE_MASK = (MALI_GRALLOC_USAGE_AFRC_RGBA_LUMA_CODING_SIZE_16 |
-	                                                      MALI_GRALLOC_USAGE_AFRC_RGBA_LUMA_CODING_SIZE_24),
+	MALI_GRALLOC_USAGE_AFRC_RGBA_LUMA_CODING_SIZE_SENTINEL = GRALLOC_USAGE_PRIVATE_2,
+	MALI_GRALLOC_USAGE_AFRC_RGBA_LUMA_CODING_SIZE_16 = MALI_GRALLOC_USAGE_AFRC_RGBA_LUMA_CODING_SIZE_SENTINEL | GRALLOC_USAGE_PRIVATE_0,
+	MALI_GRALLOC_USAGE_AFRC_RGBA_LUMA_CODING_SIZE_24 = MALI_GRALLOC_USAGE_AFRC_RGBA_LUMA_CODING_SIZE_SENTINEL | GRALLOC_USAGE_PRIVATE_1,
+	MALI_GRALLOC_USAGE_AFRC_RGBA_LUMA_CODING_SIZE_32 = MALI_GRALLOC_USAGE_AFRC_RGBA_LUMA_CODING_SIZE_SENTINEL,
+	MALI_GRALLOC_USAGE_AFRC_RGBA_LUMA_CODING_SIZE_MASK = GRALLOC_USAGE_PRIVATE_2 | GRALLOC_USAGE_PRIVATE_1 | GRALLOC_USAGE_PRIVATE_0,
 
 	MALI_GRALLOC_USAGE_AFRC_CHROMA_CODING_SIZE_DEFAULT = 0,
 	MALI_GRALLOC_USAGE_AFRC_CHROMA_CODING_SIZE_16 = GRALLOC_USAGE_PRIVATE_11,
@@ -165,7 +162,7 @@ typedef enum
 #define GRALLOC_USAGE_HW_FB static_cast<uint64_t>(1 << 12)
 
 /* Bit 10 must be zero as per Gralloc 2.x interface specification. Used, however, for backward compatibility */
-#define GRALLOC_USAGE_HW_2D  static_cast<uint64_t>(0x00000400)
+#define GRALLOC_USAGE_HW_2D static_cast<uint64_t>(0x00000400)
 
 #define GRALLOC_USAGE_SW_WRITE_MASK static_cast<uint64_t>(0xf << 4)
 #define GRALLOC_USAGE_SW_READ_MASK static_cast<uint64_t>(0xf)
@@ -177,7 +174,7 @@ typedef enum
 #define GRALLOC_USAGE_HW_TEXTURE static_cast<uint64_t>(1 << 8)
 #define GRALLOC_USAGE_HW_VIDEO_ENCODER static_cast<uint64_t>(1 << 16)
 #define GRALLOC_USAGE_HW_COMPOSER static_cast<uint64_t>(1 << 11)
-#define GRALLOC_USAGE_EXTERNAL_DISP  static_cast<uint64_t>(0x00002000)
+#define GRALLOC_USAGE_EXTERNAL_DISP static_cast<uint64_t>(0x00002000)
 
 #define GRALLOC_USAGE_SENSOR_DIRECT_DATA static_cast<uint64_t>(1 << 23)
 #define GRALLOC_USAGE_GPU_DATA_BUFFER static_cast<uint64_t>(1 << 24)
@@ -187,13 +184,14 @@ typedef enum
  */
 #define GRALLOC_USAGE_DECODER static_cast<uint64_t>(1 << 22)
 
+/* This usage should be used when using the AIDL allocator, otherwise use MALI_GRALLOC_USAGE_FRONTBUFFER */
+#define GRALLOC_USAGE_FRONTBUFFER static_cast<uint64_t>(1ULL << 32)
+
 #if !GRALLOC_HOST_BUILD
 
-#if HIDL_COMMON_VERSION_SCALED == 120
 #include <android/hardware/graphics/common/1.2/types.h>
-/* BufferUsage is not defined in 1.2/types.h as there are no changes from previous version */
+/* BufferUsage is not defined in 1.2/types.h as there are no changes from previous version in Android 12 and before*/
 namespace hidl_common = android::hardware::graphics::common::V1_1;
-#endif
 
 static_assert(GRALLOC_USAGE_SW_WRITE_RARELY == static_cast<uint64_t>(hidl_common::BufferUsage::CPU_WRITE_RARELY));
 static_assert(GRALLOC_USAGE_SW_READ_MASK == static_cast<uint64_t>(hidl_common::BufferUsage::CPU_READ_MASK));
@@ -208,57 +206,64 @@ static_assert(GRALLOC_USAGE_HW_COMPOSER == static_cast<uint64_t>(hidl_common::Bu
 static_assert(GRALLOC_USAGE_SENSOR_DIRECT_DATA == static_cast<uint64_t>(hidl_common::BufferUsage::SENSOR_DIRECT_DATA));
 static_assert(GRALLOC_USAGE_GPU_DATA_BUFFER == static_cast<uint64_t>(hidl_common::BufferUsage::GPU_DATA_BUFFER));
 static_assert(GRALLOC_USAGE_DECODER == static_cast<uint64_t>(hidl_common::BufferUsage::VIDEO_DECODER));
+#if GRALLOC_ALLOCATOR_AIDL_VERSION > 0
+static_assert(GRALLOC_USAGE_FRONTBUFFER ==
+              static_cast<uint64_t>(aidl::android::hardware::graphics::common::BufferUsage::FRONT_BUFFER));
+#endif /* GRALLOC_ALLOCATOR_AIDL_VERSION > 0 */
+
 #endif /* !GRALLOC_HOST_BUILD */
 
 static const uint64_t VALID_USAGE =
-    GRALLOC_USAGE_SW_READ_MASK |       /* 0x0FU */
-    GRALLOC_USAGE_SW_WRITE_MASK |      /* 0xF0U */
-    GRALLOC_USAGE_HW_TEXTURE |         /* 1U << 8 */
-    GRALLOC_USAGE_HW_RENDER |          /* 1U << 9 */
-    GRALLOC_USAGE_HW_2D |              /* 1U << 10 */
-    GRALLOC_USAGE_HW_COMPOSER |        /* 1U << 11 */
-    GRALLOC_USAGE_HW_FB |              /* 1U << 12 */
-    GRALLOC_USAGE_EXTERNAL_DISP |      /* 1U << 13 */
-    GRALLOC_USAGE_PROTECTED |          /* 1U << 14 */
-    GRALLOC_USAGE_CURSOR |             /* 1U << 15 */
-    GRALLOC_USAGE_HW_VIDEO_ENCODER |   /* 1U << 16 */
-    GRALLOC_USAGE_HW_CAMERA_WRITE |    /* 1U << 17 */
-    GRALLOC_USAGE_HW_CAMERA_READ |     /* 1U << 18 */
-    GRALLOC_USAGE_RENDERSCRIPT |       /* 1U << 20 */
-    GRALLOC_USAGE_DECODER |            /* 1U << 22 */
+    GRALLOC_USAGE_SW_READ_MASK | /* 0x0FU */
+    GRALLOC_USAGE_SW_WRITE_MASK | /* 0xF0U */
+    GRALLOC_USAGE_HW_TEXTURE | /* 1U << 8 */
+    GRALLOC_USAGE_HW_RENDER | /* 1U << 9 */
+    GRALLOC_USAGE_HW_2D | /* 1U << 10 */
+    GRALLOC_USAGE_HW_COMPOSER | /* 1U << 11 */
+    GRALLOC_USAGE_HW_FB | /* 1U << 12 */
+    GRALLOC_USAGE_EXTERNAL_DISP | /* 1U << 13 */
+    GRALLOC_USAGE_PROTECTED | /* 1U << 14 */
+    GRALLOC_USAGE_CURSOR | /* 1U << 15 */
+    GRALLOC_USAGE_HW_VIDEO_ENCODER | /* 1U << 16 */
+    GRALLOC_USAGE_HW_CAMERA_WRITE | /* 1U << 17 */
+    GRALLOC_USAGE_HW_CAMERA_READ | /* 1U << 18 */
+    GRALLOC_USAGE_RENDERSCRIPT | /* 1U << 20 */
+    GRALLOC_USAGE_DECODER | /* 1U << 22 */
 
     /* Producer and consumer usage are combined, but on Gralloc version 1 there is no way to differentiate these as they
      * are mapped to the same value (1U << 23). */
     GRALLOC_USAGE_SENSOR_DIRECT_DATA | /* 1U << 23 */
-    GRALLOC_USAGE_GPU_DATA_BUFFER |    /* 1U << 24 */
+    GRALLOC_USAGE_GPU_DATA_BUFFER | /* 1U << 24 */
 
-    GRALLOC_USAGE_PRIVATE_19 |         /* 1U << 48 */
-    GRALLOC_USAGE_PRIVATE_18 |         /* 1U << 49 */
-    GRALLOC_USAGE_PRIVATE_17 |         /* 1U << 50 */
-    GRALLOC_USAGE_PRIVATE_16 |         /* 1U << 51 */
-    GRALLOC_USAGE_PRIVATE_15 |         /* 1U << 52 */
-    GRALLOC_USAGE_PRIVATE_14 |         /* 1U << 53 */
-    GRALLOC_USAGE_PRIVATE_13 |         /* 1U << 54 */
-    GRALLOC_USAGE_PRIVATE_12 |         /* 1U << 55 */
-    GRALLOC_USAGE_PRIVATE_11 |         /* 1U << 56 */
-    GRALLOC_USAGE_PRIVATE_0 |          /* 1U << 28 */
-    GRALLOC_USAGE_PRIVATE_1 |          /* 1U << 29 */
-    GRALLOC_USAGE_PRIVATE_2 |          /* 1U << 30 */
-    GRALLOC_USAGE_PRIVATE_3;           /* 1U << 31 */
+    GRALLOC_USAGE_FRONTBUFFER | /* 1L << 32 */
+
+    GRALLOC_USAGE_PRIVATE_19 | /* 1U << 48 */
+    GRALLOC_USAGE_PRIVATE_18 | /* 1U << 49 */
+    GRALLOC_USAGE_PRIVATE_17 | /* 1U << 50 */
+    GRALLOC_USAGE_PRIVATE_16 | /* 1U << 51 */
+    GRALLOC_USAGE_PRIVATE_15 | /* 1U << 52 */
+    GRALLOC_USAGE_PRIVATE_14 | /* 1U << 53 */
+    GRALLOC_USAGE_PRIVATE_13 | /* 1U << 54 */
+    GRALLOC_USAGE_PRIVATE_12 | /* 1U << 55 */
+    GRALLOC_USAGE_PRIVATE_11 | /* 1U << 56 */
+    GRALLOC_USAGE_PRIVATE_0 | /* 1U << 28 */
+    GRALLOC_USAGE_PRIVATE_1 | /* 1U << 29 */
+    GRALLOC_USAGE_PRIVATE_2 | /* 1U << 30 */
+    GRALLOC_USAGE_PRIVATE_3; /* 1U << 31 */
 
 /*
  * Determines whether frontbuffer usage is enabled.
  *
  * @param usage   gralloc usage bits.
  *
- * @return 1, if frontbuffer usage is enabled
- *         0, otherwise
+ * @return true, if frontbuffer usage is enabled
+ *         false, otherwise
  */
 static inline bool gralloc_usage_is_frontbuffer(const uint64_t usage)
 {
-	/* AFRC_RGBA_LUMA_CODING_SIZE_16 shares usage bits with FRONTBUFFER. */
-	return (usage & MALI_GRALLOC_USAGE_FRONTBUFFER) && ((usage & MALI_GRALLOC_USAGE_AFRC_RGBA_LUMA_CODING_SIZE_16) !=
-	                                                    MALI_GRALLOC_USAGE_AFRC_RGBA_LUMA_CODING_SIZE_16);
+	/* AFRC_RGBA_LUMA_CODING_SIZE_16 shares usage bits with FRONTBUFFER when using the HIDL allocator. */
+	return (usage & GRALLOC_USAGE_FRONTBUFFER) || ((usage & MALI_GRALLOC_USAGE_FRONTBUFFER) &&
+	       !(usage & MALI_GRALLOC_USAGE_AFRC_RGBA_LUMA_CODING_SIZE_SENTINEL));
 }
 
 /*
@@ -266,15 +271,14 @@ static inline bool gralloc_usage_is_frontbuffer(const uint64_t usage)
  *
  * @param usage   gralloc usage bits.
  *
- * @return 1, if no AFBC usage flag is enabled
- *         0, otherwise
+ * @return true, if no AFBC usage flag is enabled
+ *         false, otherwise
  */
 static inline bool gralloc_usage_is_no_afbc(const uint64_t usage)
 {
 	/* AFRC_RGBA_LUMA_CODING_SIZE_24 shares usage bits with NO_AFBC.
 	 * We assume that when AFRC is requested that AFBC is also enabled.
 	 */
-	return ((usage & MALI_GRALLOC_USAGE_NO_AFBC) == MALI_GRALLOC_USAGE_NO_AFBC) &&
-	       ((usage & MALI_GRALLOC_USAGE_AFRC_RGBA_LUMA_CODING_SIZE_24) !=
-	        MALI_GRALLOC_USAGE_AFRC_RGBA_LUMA_CODING_SIZE_24);
+	return (usage & MALI_GRALLOC_USAGE_NO_AFBC) == MALI_GRALLOC_USAGE_NO_AFBC &&
+	       !(usage & MALI_GRALLOC_USAGE_AFRC_RGBA_LUMA_CODING_SIZE_SENTINEL);
 }

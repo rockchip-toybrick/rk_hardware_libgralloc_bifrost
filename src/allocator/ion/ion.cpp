@@ -38,8 +38,7 @@
 #include <hardware/hardware.h>
 #include <hardware/gralloc1.h>
 
-#include "private_interface_types.h"
-#include "buffer.h"
+#include "core/buffer.h"
 #include "helper_functions.h"
 #include "gralloc/formats.h"
 #include "usages.h"
@@ -150,21 +149,11 @@ private:
 };
 
 static void set_ion_flags(enum ion_heap_type heap_type, uint64_t usage,
-                          unsigned int *priv_heap_flag, unsigned int *ion_flags)
+                          unsigned int *ion_flags)
 {
 #if !defined(GRALLOC_USE_ION_DMA_HEAP) || !GRALLOC_USE_ION_DMA_HEAP
 	GRALLOC_UNUSED(heap_type);
 #endif
-
-	if (priv_heap_flag)
-	{
-#if defined(GRALLOC_USE_ION_DMA_HEAP) && GRALLOC_USE_ION_DMA_HEAP
-		if (heap_type == ION_HEAP_TYPE_DMA)
-		{
-			*priv_heap_flag = private_handle_t::PRIV_FLAGS_USES_ION_DMA_HEAP;
-		}
-#endif
-	}
 
 	if (ion_flags)
 	{
@@ -430,8 +419,6 @@ void allocator_free(private_handle_t *handle)
 
 int allocator_allocate(const buffer_descriptor_t *descriptor, private_handle_t **out_handle)
 {
-	int ret = 0;
-
 	ion_device *dev = ion_device::get();
 	if (!dev)
 	{
@@ -447,9 +434,8 @@ int allocator_allocate(const buffer_descriptor_t *descriptor, private_handle_t *
 		return -ENOMEM;
 	}
 
-	unsigned int priv_heap_flag = 0;
 	unsigned int ion_flags = 0;
-	set_ion_flags(heap_type, usage, &priv_heap_flag, &ion_flags);
+	set_ion_flags(heap_type, usage, &ion_flags);
 
 	android::base::unique_fd shared_fd{
 		dev->alloc_from_ion_heap(descriptor->size, heap_type, ion_flags)};
@@ -460,9 +446,9 @@ int allocator_allocate(const buffer_descriptor_t *descriptor, private_handle_t *
 	}
 
 	private_handle_t *handle = make_private_handle(
-	    priv_heap_flag, descriptor->size, descriptor->consumer_usage,
+	    descriptor->size, descriptor->consumer_usage,
 	    descriptor->producer_usage, std::move(shared_fd), descriptor->hal_format, descriptor->alloc_format,
-	    descriptor->width, descriptor->height, descriptor->size, descriptor->layer_count,
+	    descriptor->width, descriptor->height, descriptor->layer_count,
 	    descriptor->plane_info, descriptor->pixel_stride);
 	if (nullptr == handle)
 	{

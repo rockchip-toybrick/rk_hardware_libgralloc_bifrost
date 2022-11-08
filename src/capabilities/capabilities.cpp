@@ -18,41 +18,42 @@
 
 #include "capabilities.h"
 
-#include <string.h>
-#include <inttypes.h>
-#include <assert.h>
+#include <cassert>
+#include <cinttypes>
+#include <string>
 #include <type_traits>
 
 #include "xml_configuration.h"
 
-static bool caps_supports_feature_cpu(const std::string &feature_name)
+static bool caps_supports_feature_cpu(feature_t feature)
 {
-	if (feature_name == "FORMAT_R10G10B10A2")
+	if (feature == feature_t::FORMAT_R10G10B10A2)
 	{
 		return true;
 	}
-	if (feature_name == "FORMAT_R16G16B16A16_FLOAT")
+	if (feature == feature_t::FORMAT_R16G16B16A16_FLOAT)
 	{
 		return true;
 	}
 	return false;
 }
 
-bool ip_support_feature(mali_gralloc_ip producers, mali_gralloc_ip consumers, const char *name)
+bool ip_support_feature(mali_gralloc_ip producers, mali_gralloc_ip consumers, feature_t feature)
 {
 	static ip_capability capability_handles[] = {
 		/* clang-format off */
-		{ MALI_GRALLOC_IP_GPU, "gpu" },
-		{ MALI_GRALLOC_IP_DPU, "dpu" },
-		{ MALI_GRALLOC_IP_DPU_AEU, "dpu_aeu" },
-		{ MALI_GRALLOC_IP_VPU, "vpu" },
-		{ MALI_GRALLOC_IP_CAM, "cam" },
+		{ MALI_GRALLOC_IP_GPU },
+		{ MALI_GRALLOC_IP_DPU },
+		{ MALI_GRALLOC_IP_DPU_AEU },
+		{ MALI_GRALLOC_IP_VPU },
+		{ MALI_GRALLOC_IP_CAM },
 		/* clang-format on */
 	};
 
-	if ((producers & MALI_GRALLOC_IP_CPU || consumers & MALI_GRALLOC_IP_CPU) && !caps_supports_feature_cpu(name))
+	const std::string name = feature_to_name(feature);
+	if ((producers & MALI_GRALLOC_IP_CPU || consumers & MALI_GRALLOC_IP_CPU) && !caps_supports_feature_cpu(feature))
 	{
-		MALI_GRALLOC_LOGV("Feature %s not supported on CPU", name);
+		MALI_GRALLOC_LOG(VERBOSE) << "Feature " << name << " not supported on CPU";
 		return false;
 	}
 
@@ -61,25 +62,26 @@ bool ip_support_feature(mali_gralloc_ip producers, mali_gralloc_ip consumers, co
 		/* We handle a missing IP by posing no restrictions for that IP on format allocation. */
 		if (!handle.caps_have_value())
 		{
-			LOG_ALWAYS_FATAL_IF(!strcmp(name, "gpu"), "gpu.xml not found.");
+			LOG_ALWAYS_FATAL_IF(handle.get_ip() == MALI_GRALLOC_IP_GPU,
+				"Unable to retrieve GPU capabilities. XML file either not found or contains syntax errors. Aborting.");
 			continue;
 		}
 
 		auto ip = handle.get_ip();
 		if (producers & ip)
 		{
-			if (!handle.is_feature_supported(name, ip_capability::permission_t::write))
+			if (!handle.is_feature_supported(feature, ip_capability::permission_t::write))
 			{
-				MALI_GRALLOC_LOGV("Feature %s not supported on producer %s", name, handle.get_path());
+				MALI_GRALLOC_LOG(VERBOSE) << "Feature "<< name << " not supported on producer " << handle.get_path();
 				return false;
 			}
 		}
 
 		if (consumers & ip)
 		{
-			if (!handle.is_feature_supported(name, ip_capability::permission_t::read))
+			if (!handle.is_feature_supported(feature, ip_capability::permission_t::read))
 			{
-				MALI_GRALLOC_LOGV("Feature %s not supported on consumer %s", name, handle.get_path());
+				MALI_GRALLOC_LOG(VERBOSE) << "Feature " << name << " not supported on consumer " << handle.get_path();
 				return false;
 			}
 		}
@@ -92,7 +94,14 @@ bool ip_support_feature(mali_gralloc_ip producers, mali_gralloc_ip consumers, co
 extern "C" bool mali_gralloc_ip_supports_feature(
 	mali_gralloc_ip producers, mali_gralloc_ip consumers, const char *feature_name)
 {
-	return ip_support_feature(producers, consumers, feature_name);
+	feature_t feature = name_to_feature(std::string(feature_name));
+	if (feature == feature_t::UNKNOWN)
+	{
+		MALI_GRALLOC_LOGE("%s not the name of a recognized feature", feature_name);
+		return false;
+	}
+
+	return ip_support_feature(producers, consumers, feature);
 }
 
 static_assert(std::is_same<decltype(&mali_gralloc_ip_supports_feature),

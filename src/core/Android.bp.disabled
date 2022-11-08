@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Arm Limited.
+ * Copyright (C) 2020-2022 Arm Limited.
  * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,50 +15,79 @@
  * limitations under the License.
  */
 
-cc_defaults {
-	name: "arm_gralloc_core_defaults",
-	defaults: [
-		"arm_gralloc_defaults",
-		"arm_gralloc_version_defaults",
-	],
+filegroup {
+    name: "arm_gralloc_core_defaults_srcs",
+    srcs: [
+        "buffer_access.cpp",
+        "buffer_allocation.cpp",
+        "formats.cpp",
+        "format_info.cpp",
+        "drm_utils.cpp",
+    ],
+}
 
-	srcs: [
-		"buffer_access.cpp",
-		"buffer_allocation.cpp",
-		"formats.cpp",
-		"reference.cpp",
-		"format_info.cpp",
-		"drm_utils.cpp",
-	],
-	static_libs: [
-		"libarect",
-	],
-	shared_libs: [
-		"liblog",
-		"libcutils",
-		"libutils",
-		"libdrm",
-	],
-	target: {
-		android: {
-			shared_libs: [
-				"libhardware",
-			],
-		},
-	},
+cc_defaults {
+    name: "arm_gralloc_core_defaults",
+    defaults: [
+        "arm_gralloc_defaults",
+        "arm_gralloc_version_defaults",
+        "arm_gralloc_uses_aidl_defaults",
+    ],
+
+    srcs: [
+        ":arm_gralloc_core_defaults_srcs",
+    ],
+    static_libs: [
+        "libarect",
+    ],
+    shared_libs: [
+        "liblog",
+        "libcutils",
+        "libutils",
+        "libdrm",
+    ],
+    target: {
+        android: {
+            shared_libs: [
+                "libhardware",
+            ],
+        },
+    },
 }
 
 cc_library_static {
-	name: "libgralloc_core",
-	defaults: [
-		"arm_gralloc_core_defaults",
-		"arm_gralloc_version_defaults",
-	],
+    name: "libgralloc_core",
+    defaults: [
+        "arm_gralloc_core_defaults",
+        "arm_gralloc_version_defaults",
+    ],
 }
 
-cc_library_host_static {
-	name: "libgralloc_core_host",
-	defaults: [
-		"arm_gralloc_core_defaults",
-	],
+filegroup {
+    name: "arm_gralloc_internal_format_defaults_srcs",
+    srcs: [
+        "internal_format.cpp",
+    ],
+}
+
+cc_defaults {
+    name: "arm_gralloc_internal_format_defaults",
+    owner: "arm",
+    vendor: true,
+    proprietary: true,
+    defaults: [
+        "arm_gralloc_defaults",
+        "arm_gralloc_version_defaults",
+    ],
+    srcs: [
+        ":arm_gralloc_internal_format_defaults_srcs",
+    ],
+}
+
+cc_library_static {
+    name: "libgralloc_internal_format",
+    host_supported: true,
+    defaults: [
+        "arm_gralloc_internal_format_defaults",
+    ],
 }
