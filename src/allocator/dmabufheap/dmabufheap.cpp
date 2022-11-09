@@ -247,10 +247,11 @@ void init_afbc(uint8_t *buf, const internal_format_t alloc_format,
 int allocator_allocate(const buffer_descriptor_t *descriptor, private_handle_t **out_handle)
 {
 	uint64_t usage;
-	uint32_t max_buffer_index = 0;
 	private_handle_t *handle = nullptr;
 	int ret = 0;
+#if 0 //CTS
 	private_handle_t* hnd= nullptr; // 'handle' 的别名.
+#endif
 
 	if ( NULL == s_buf_allocator )
 	{

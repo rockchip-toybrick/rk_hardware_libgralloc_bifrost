@@ -137,7 +137,9 @@ int validate_lock_input_parameters(const buffer_handle_t buffer, const int l,
 	GRALLOC_UNUSED(usage);
 	const int lock_pid = getpid();
 	const private_handle_t * const hnd = (private_handle_t *)buffer;
+#if 0
 	auto alloc_format = hnd->get_alloc_format();
+#endif
 
 	if ((l < 0) || (t < 0) || (w < 0) || (h < 0))
 	{

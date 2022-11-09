@@ -86,7 +86,6 @@ cc_defaults {
 
 cc_library_static {
     name: "libgralloc_internal_format",
-    host_supported: true,
     defaults: [
         "arm_gralloc_internal_format_defaults",
     ],

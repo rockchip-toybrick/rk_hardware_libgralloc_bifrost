@@ -1011,8 +1011,9 @@ int mali_gralloc_derive_format_and_size(buffer_descriptor_t *descriptor)
 	* Select optimal internal pixel format based upon
 	* usage and requested format.
 	*/
-	descriptor->alloc_format = mali_gralloc_select_format(*descriptor, usage);
+	descriptor->alloc_format = mali_gralloc_select_format(*descriptor, usage, bufDescriptor->width * bufDescriptor->height);
 
+#if 0 //CTS
 	if ( ( (bufDescriptor->alloc_format.get_value() == 0x30
 				|| bufDescriptor->alloc_format.get_value() == 0x31
 				|| bufDescriptor->alloc_format.get_value() == 0x32
@@ -1030,6 +1031,7 @@ int mali_gralloc_derive_format_and_size(buffer_descriptor_t *descriptor)
 				bufDescriptor->alloc_format.get_value(), usage);
 		return -EINVAL;
 	}
+#endif
 
 	if (descriptor->alloc_format.is_undefined())
 	{
@@ -1094,7 +1096,9 @@ int mali_gralloc_derive_format_and_size(buffer_descriptor_t *descriptor)
 	{
 		const uint32_t base_format = bufDescriptor->alloc_format.get_base();
 		const bool is_stride_specified = usage & RK_GRALLOC_USAGE_SPECIFY_STRIDE;
+#if 0
 		const std::vector<format_info_t> &formats = get_all_base_formats();
+#endif
 
 		/* 若 base_format "是" 被 rk_video 使用的格式, 且 rk client 要求指定 stride, 则 ... */
 		if ( is_base_format_used_by_rk_video(base_format) && is_stride_specified )
