@@ -29,7 +29,7 @@ cc_defaults {
         "libhardware",
         "liblog",
         "libcutils",
-        "libion",
+		"libdmabufheap",
         "libsync",
         "libutils",
         "libnativewindow",

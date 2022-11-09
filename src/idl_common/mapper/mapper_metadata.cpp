@@ -550,7 +550,7 @@ Error set_metadata(const private_handle_t *handle, const IMapper::MetadataType &
 		{
 			Dataspace dataspace;
 			err = android::gralloc4::decodeDataspace(metadata, &dataspace);
-			if (!err)
+			if (!err && dataspace!= Dataspace::UNKNOWN)
 			{
 				set_dataspace(handle, dataspace);
 			}

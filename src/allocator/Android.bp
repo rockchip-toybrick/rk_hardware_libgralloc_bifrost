@@ -31,10 +31,10 @@ soong_config_module_type {
 soong_config_bool_variable {
 	name: "gralloc_use_ion_dma_heap",
 }
+
 soong_config_bool_variable {
 	name: "gralloc_use_contiguous_display_memory",
 }
-
 
 arm_gralloc_allocator_cc_defaults {
 	name: "arm_gralloc_allocator_defaults",

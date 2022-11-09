@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Arm Limited.
+ * Copyright (C) 2022 Arm Limited.
  * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,31 +15,21 @@
  * limitations under the License.
  */
 
-filegroup {
-	name: "libgralloc_hidl_common_allocator",
-	srcs: [
-		"allocator.cpp",
-	],
-}
-
-filegroup {
-	name: "libgralloc_hidl_common_mapper",
-	srcs: [
-		"mapper.cpp",
-		"registered_handle_pool.cpp",
-	],
-}
-
-filegroup {
-	name: "libgralloc_hidl_common_mapper_metadata",
-	srcs: [
-		"mapper_metadata.cpp",
-	],
-}
-
-filegroup {
-	name: "libgralloc_hidl_common_shared_metadata",
-	srcs: [
-		"shared_metadata.cpp",
-	],
+cc_library_shared {
+    name: "android.hardware.graphics.mapper@4.0-impl-arm",
+    defaults: [
+        "arm_gralloc_api_4x_defaults",
+        "arm_gralloc_uses_aidl_defaults",
+        "arm_gralloc_vintf_mapper_defaults",
+        "libgralloc_mapper_deps",
+    ],
+    shared_libs: [
+        "android.hardware.graphics.mapper@4.0",
+    ],
+    static_libs: [
+        "libgralloc_mapper",
+    ],
+    srcs: [
+        "mapper.cpp",
+    ],
 }

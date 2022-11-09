@@ -39,8 +39,7 @@
 #include <hardware/hardware.h>
 #include <hardware/gralloc1.h>
 
-#include "private_interface_types.h"
-#include "buffer.h"
+#include "core/buffer.h"
 #include "helper_functions.h"
 #include "gralloc/formats.h"
 #include "usages.h"
@@ -247,7 +246,6 @@ void init_afbc(uint8_t *buf, const internal_format_t alloc_format,
 
 int allocator_allocate(const buffer_descriptor_t *descriptor, private_handle_t **out_handle)
 {
-	unsigned int priv_heap_flag = private_handle_t::PRIV_FLAGS_USES_DBH;
 	uint64_t usage;
 	uint32_t max_buffer_index = 0;
 	private_handle_t *handle = nullptr;
@@ -256,12 +254,12 @@ int allocator_allocate(const buffer_descriptor_t *descriptor, private_handle_t *
 
 	if ( NULL == s_buf_allocator )
 	{
-                s_buf_allocator = new BufferAllocator();
+        s_buf_allocator = new BufferAllocator();
 		if ( NULL == s_buf_allocator )
 		{
-                        MALI_GRALLOC_LOGE("Failed to new a BufferAllocator instance.");
-                        return -1;
-                }
+            MALI_GRALLOC_LOGE("Failed to new a BufferAllocator instance.");
+            return -1;
+        }
 
 		ret = setup_mappings(s_buf_allocator);
 		if (ret)
@@ -269,7 +267,7 @@ int allocator_allocate(const buffer_descriptor_t *descriptor, private_handle_t *
 			MALI_GRALLOC_LOGE("Could not setup heap mappings!");
 			return ret;
 		}
-        }
+    }
 
 	usage = descriptor->consumer_usage | descriptor->producer_usage;
 
@@ -285,9 +283,9 @@ int allocator_allocate(const buffer_descriptor_t *descriptor, private_handle_t *
 	}
 
 	handle = make_private_handle(
-	    priv_heap_flag, descriptor->size, descriptor->consumer_usage,
+	    descriptor->size, descriptor->consumer_usage,
 	    descriptor->producer_usage, std::move(shared_fd), descriptor->hal_format, descriptor->alloc_format,
-	    descriptor->width, descriptor->height, descriptor->size, descriptor->layer_count,
+	    descriptor->width, descriptor->height, descriptor->layer_count,
 	    descriptor->plane_info, descriptor->pixel_stride);
 	if (nullptr == handle)
 	{
@@ -296,6 +294,7 @@ int allocator_allocate(const buffer_descriptor_t *descriptor, private_handle_t *
 		goto fail;
 	}
 
+#if 0
 	// for CTS.
 	hnd = handle;
 	if (((hnd->req_format == 0x30 || hnd->req_format == 0x31 || hnd->req_format == 0x32 ||
@@ -308,6 +307,7 @@ int allocator_allocate(const buffer_descriptor_t *descriptor, private_handle_t *
 		ret = -1;
 		goto fail;
 	}
+#endif
 
 	if (usage & GRALLOC_USAGE_PROTECTED)
 	{

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Arm Limited.
+ * Copyright (C) 2022 Arm Limited.
  * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,31 +15,30 @@
  * limitations under the License.
  */
 
-filegroup {
-	name: "libgralloc_hidl_common_allocator",
-	srcs: [
-		"allocator.cpp",
-	],
+cc_defaults {
+    name: "libgralloc_shared_deps",
+    defaults: [
+        "arm_gralloc_version_defaults",
+        "arm_gralloc_uses_aidl_defaults",
+    ],
+    shared_libs: [
+        "liblog",
+        "libhidlbase",
+        "libgralloctypes",
+        "libdrm",
+    ],
 }
 
-filegroup {
-	name: "libgralloc_hidl_common_mapper",
-	srcs: [
-		"mapper.cpp",
-		"registered_handle_pool.cpp",
-	],
-}
-
-filegroup {
-	name: "libgralloc_hidl_common_mapper_metadata",
-	srcs: [
-		"mapper_metadata.cpp",
-	],
-}
-
-filegroup {
-	name: "libgralloc_hidl_common_shared_metadata",
-	srcs: [
-		"shared_metadata.cpp",
-	],
+cc_library_static {
+    name: "libgralloc_shared",
+    defaults: [
+        "arm_gralloc_defaults",
+        "libgralloc_shared_deps",
+    ],
+    export_include_dirs: [
+        "./include",
+    ],
+    srcs: [
+        "shared_metadata.cpp",
+    ],
 }
