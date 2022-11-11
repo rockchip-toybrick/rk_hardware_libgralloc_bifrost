@@ -32,6 +32,6 @@ cc_binary {
         "libutils",
     ],
     required: [
-        "android.hardware.graphics.allocator@4.0-impl-arm",
+        "android.hardware.graphics.allocator@4.0-impl-bifrost",
     ],
 }

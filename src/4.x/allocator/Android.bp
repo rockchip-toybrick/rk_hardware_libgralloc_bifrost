@@ -28,7 +28,7 @@ cc_defaults {
 }
 
 cc_library_shared {
-    name: "android.hardware.graphics.allocator@4.0-impl-arm",
+    name: "android.hardware.graphics.allocator@4.0-impl-bifrost",
     defaults: [
         "arm_gralloc_api_4x_defaults",
         "arm_gralloc_vintf_allocator_defaults",
