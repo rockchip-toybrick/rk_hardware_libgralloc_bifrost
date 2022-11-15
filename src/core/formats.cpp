@@ -208,6 +208,32 @@ void mali_gralloc_adjust_dimensions(const internal_format_t alloc_format, const 
 		}
 	}
 
+	/*
+	 * Addjust alloc size for Depth and stencil formats
+	 *
+	 * for deqp test:
+	 *		dEQP-EGL.functional.image.api#create_image_gles2_android_native_depth_component_16
+	 *		dEQP-EGL.functional.image.api#create_image_gles2_android_native_depth24_stencil8
+	 *		...
+	 *
+	 * becasue DRM missing Depth and stencil formats fourcc
+	 *		so it will make get_buffer_format fail on get_native_buffer(winsys on mali so)
+	 *
+	 * this workaround also need to make  adaptor for Depth and stencil formats to other drm fourcc (same bits)
+	 *		On src/core/drm_utils.cpp.
+	 */
+	if (alloc_format.get_base() == MALI_GRALLOC_FORMAT_INTERNAL_STENCIL_8 ||
+		alloc_format.get_base() == MALI_GRALLOC_FORMAT_INTERNAL_DEPTH_16 ||
+		alloc_format.get_base() == MALI_GRALLOC_FORMAT_INTERNAL_DEPTH_24 ||
+		alloc_format.get_base() == MALI_GRALLOC_FORMAT_INTERNAL_DEPTH_24_STENCIL_8 ||
+		alloc_format.get_base() == MALI_GRALLOC_FORMAT_INTERNAL_DEPTH_32F ||
+		alloc_format.get_base() == MALI_GRALLOC_FORMAT_INTERNAL_DEPTH_32F_STENCIL_8)
+	{
+		ALOGE("rk-debug workaround for deqp test about Depth and stencil formats");
+		*height = *height * 2;
+	}
+
+
 	/*-------------------------------------------------------*/
 
 #if 0	// 这段逻辑不 适用于 RK 的 VPU.

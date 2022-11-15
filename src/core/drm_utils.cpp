@@ -66,6 +66,14 @@ const static std::unordered_map<mali_gralloc_internal_format, table_entry> table
 
 	{ MALI_GRALLOC_FORMAT_INTERNAL_R8, {DRM_FORMAT_R8, format_colormodel::rgb} },
 
+	/* workaround for deqp test, DRM fourcc missing Depth and stencil formats, so use other to replace */
+	{ MALI_GRALLOC_FORMAT_INTERNAL_STENCIL_8, {DRM_FORMAT_R8, format_colormodel::rgb} },
+	{ MALI_GRALLOC_FORMAT_INTERNAL_DEPTH_16, {DRM_FORMAT_RGB565, format_colormodel::rgb} },
+	{ MALI_GRALLOC_FORMAT_INTERNAL_DEPTH_24, {DRM_FORMAT_BGR888, format_colormodel::rgb} },
+	{ MALI_GRALLOC_FORMAT_INTERNAL_DEPTH_24_STENCIL_8, {DRM_FORMAT_BGR888, format_colormodel::rgb} },
+	{ MALI_GRALLOC_FORMAT_INTERNAL_DEPTH_32F, {DRM_FORMAT_ABGR8888, format_colormodel::rgb} },
+	{ MALI_GRALLOC_FORMAT_INTERNAL_DEPTH_32F_STENCIL_8, {DRM_FORMAT_ABGR8888, format_colormodel::rgb} },
+
 	/* Format introduced in Android P, mapped to MALI_GRALLOC_FORMAT_INTERNAL_P010. */
 	{ HAL_PIXEL_FORMAT_YCBCR_P010, {DRM_FORMAT_P010, format_colormodel::yuv} },
 };

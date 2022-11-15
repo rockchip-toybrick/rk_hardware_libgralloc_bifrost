@@ -1013,26 +1013,6 @@ int mali_gralloc_derive_format_and_size(buffer_descriptor_t *descriptor)
 	*/
 	descriptor->alloc_format = mali_gralloc_select_format(*descriptor, usage, bufDescriptor->width * bufDescriptor->height);
 
-#if 0 //CTS
-	if ( ( (bufDescriptor->alloc_format.get_value() == 0x30
-				|| bufDescriptor->alloc_format.get_value() == 0x31
-				|| bufDescriptor->alloc_format.get_value() == 0x32
-				|| bufDescriptor->alloc_format.get_value() == 0x33
-				|| bufDescriptor->alloc_format.get_value() == 0x34
-				|| bufDescriptor->alloc_format.get_value() == 0x35)
-			&& (usage == 0x300 || usage == 0x200)
-			&& alloc_width <= 100 && alloc_height <= 100)
-		|| (bufDescriptor->alloc_format.get_value() == 0x100
-			&& (alloc_width == 100 || alloc_width == 4)
-			&& (alloc_height == 100 || alloc_height == 4)
-			&& (usage == 0x300 || usage == 0x200) ) )
-	{
-		ALOGE("rk-debug isSupportedi workaround for cts NativeHardware format = 0x%x and usage 0x%" PRIx64,
-				bufDescriptor->alloc_format.get_value(), usage);
-		return -EINVAL;
-	}
-#endif
-
 	if (descriptor->alloc_format.is_undefined())
 	{
 		MALI_GRALLOC_LOGE("ERROR: Unrecognized and/or unsupported format 0x%" PRIx64 " and usage 0x%" PRIx64,
