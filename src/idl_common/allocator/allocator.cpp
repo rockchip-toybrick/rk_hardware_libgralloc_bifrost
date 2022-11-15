@@ -16,6 +16,9 @@
  * limitations under the License.
  */
 
+#include "../custom_log.h"
+#include <inttypes.h>
+
 #include "idl_common/allocator.h"
 #include "idl_common/shared_metadata.h"
 
@@ -130,6 +133,35 @@ std::pair<android::status_t, std::vector<const native_handle_t *>> allocate(buff
 		 */
 		munmap(hnd->attr_base, hnd->attr_size);
 		hnd->attr_base = MAP_FAILED;
+
+#ifdef ENABLE_DEBUG_LOG
+        {
+            buffer_descriptor_t* bufDescriptor = buffer_descriptor;
+			const auto internal_format = hnd->get_alloc_format();
+			const auto alloc_format = internal_format.get_base();
+
+            ALOGD("got new private_handle_t instance @%p for buffer '%s'. share_fd : %d, share_attr_fd : %d, "
+                "width : %d, height : %d, "
+                "req_format : 0x%x, producer_usage : 0x%" PRIx64 ", consumer_usage : 0x%" PRIx64 ", "
+                ", stride : %d, "
+                "alloc_format : %d, size : %d, layer_count : %u",
+                hnd, (bufDescriptor->name).c_str() == nullptr ? "unset" : (bufDescriptor->name).c_str(),
+              hnd->share_fd, hnd->share_attr_fd, hnd->width, hnd->height,
+              hnd->req_format, hnd->producer_usage, hnd->consumer_usage,
+              hnd->stride,
+              alloc_format, hnd->size, hnd->layer_count);
+            ALOGD("plane_info[0]: offset : %u, byte_stride : %u, alloc_width : %u, alloc_height : %u",
+                    (hnd->plane_info)[0].offset,
+                    (hnd->plane_info)[0].byte_stride,
+                    (hnd->plane_info)[0].alloc_width,
+                    (hnd->plane_info)[0].alloc_height);
+            ALOGD("plane_info[1]: offset : %u, byte_stride : %u, alloc_width : %u, alloc_height : %u",
+                    (hnd->plane_info)[1].offset,
+                    (hnd->plane_info)[1].byte_stride,
+                    (hnd->plane_info)[1].alloc_width,
+                    (hnd->plane_info)[1].alloc_height);
+        }
+#endif
 
 		int tmp_stride = buffer_descriptor->pixel_stride;
 

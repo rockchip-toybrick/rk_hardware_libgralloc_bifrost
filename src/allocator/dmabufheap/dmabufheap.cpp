@@ -98,9 +98,9 @@ static const char* pick_dmabuf_heap(uint64_t usage)
 	if (usage & GRALLOC_USAGE_PROTECTED)
 	{
 		MALI_GRALLOC_LOGE("Protected dmabuf_heap memory is not supported yet.");
-		return NULL;
 	}
-	else if ( usage & RK_GRALLOC_USAGE_PHY_CONTIG_BUFFER )
+
+	if ( usage & RK_GRALLOC_USAGE_PHY_CONTIG_BUFFER )
 	{
 		return DMABUF_CMA;
 	}
