@@ -33,7 +33,8 @@ cc_binary {
         "liblog",
         "libutils",
         "libbinder_ndk",
+		"libdmabufheap",
         "android.hardware.graphics.allocator-V1-ndk",
-        "android.hardware.graphics.allocator-V1-arm",
+        "android.hardware.graphics.allocator-V1-bifrost",
     ],
 }
