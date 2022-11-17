@@ -391,6 +391,7 @@ Error validateBufferSize(void *buffer, const IMapper::BufferDescriptorInfo &desc
 		return Error::BAD_VALUE;
 	}
 
+#if 0
 	/* Some usages need to match and the rest of the usage must be a subset of the buffer's usages */
 	uint64_t must_match_mask = GRALLOC_USAGE_PROTECTED;
 	uint64_t descriptor_usage = static_cast<uint64_t>(descriptorInfo.usage);
@@ -409,6 +410,7 @@ Error validateBufferSize(void *buffer, const IMapper::BufferDescriptorInfo &desc
 		                  descriptor_usage);
 		return Error::BAD_VALUE;
 	}
+#endif
 
 	/* The stride used should match the stride returned on buffer allocation. */
 	if (in_stride != 0 && static_cast<uint32_t>(gralloc_buffer->stride) != in_stride)
