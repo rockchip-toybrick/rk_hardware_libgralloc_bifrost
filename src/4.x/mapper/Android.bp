@@ -20,7 +20,6 @@ cc_library_shared {
     defaults: [
         "arm_gralloc_api_4x_defaults",
         "arm_gralloc_uses_aidl_defaults",
-        "arm_gralloc_vintf_mapper_defaults",
         "libgralloc_mapper_deps",
     ],
     shared_libs: [
