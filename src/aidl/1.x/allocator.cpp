@@ -18,6 +18,7 @@
 #include "allocator.h"
 #include "idl_common/descriptor.h"
 #include "idl_common/allocator.h"
+#include "core/buffer_allocation.h"
 
 #include <aidlcommonsupport/NativeHandle.h>
 #include <aidl/android/hardware/graphics/allocator/AllocationError.h>
@@ -28,7 +29,7 @@ namespace aidl::android::hardware::graphics::allocator::impl::arm
 using ::android::hardware::hidl_vec;
 
 ndk::ScopedAStatus allocator::allocate(const std::vector<uint8_t> &in_descriptor, int32_t in_count,
-                                       AllocationResult *out_result)
+                                        AllocationResult *out_result)
 {
 	buffer_descriptor_t buffer_descriptor;
 	hidl_vec<uint8_t> hidl_descriptor(in_descriptor);
@@ -60,9 +61,21 @@ ndk::ScopedAStatus allocator::allocate(const std::vector<uint8_t> &in_descriptor
 	out_result->stride = buffer_descriptor.pixel_stride;
 	out_result->buffers.reserve(in_count);
 	/* Pass ownership when returning the created handles. */
+	unsigned int i = 0;
 	for (const auto &native_handle : result.second)
 	{
 		out_result->buffers.emplace_back(::android::makeToAidl(native_handle));
+		out_result->buffers[i] = ::android::dupToAidl(native_handle);
+		i++;
+	}
+
+	/* The application should import the Gralloc buffers using IMapper for
+	 * further usage. Free the allocated buffers in IAllocator context.
+	 */
+	for (const auto &native_handle : result.second)
+	{
+	    mali_gralloc_buffer_free(private_handle_t::downcast(native_handle));
+	    native_handle_delete(const_cast<native_handle_t *>(native_handle));
 	}
 
 	return ndk::ScopedAStatus::ok();
