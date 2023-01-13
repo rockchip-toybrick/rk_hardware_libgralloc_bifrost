@@ -1673,6 +1673,7 @@ static internal_format_t rk_gralloc_select_format(const mali_gralloc_android_for
                                                 && internal_format != MALI_GRALLOC_FORMAT_INTERNAL_RGBA_16161616
                                                 && internal_format != MALI_GRALLOC_FORMAT_INTERNAL_NV16
                                                 && internal_format != MALI_GRALLOC_FORMAT_INTERNAL_BGR_888
+                                                && internal_format != HAL_PIXEL_FORMAT_DEPTH_32F
                                                 && should_sf_client_layer_use_afbc_format_by_size(internal_format,
                                                                                                   buffer_size) )
                                         {
