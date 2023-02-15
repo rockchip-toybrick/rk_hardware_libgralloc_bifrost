@@ -170,10 +170,10 @@ extern "C" {
 
 /*-----------------------------------*/
 #ifdef LOG_FILE_PATH
-#define E(fmt, args...) \
+#define MY_E(fmt, args...) \
     { LOGE("[File] : %s; [Line] : %d; [Func] : %s;\n" fmt , __FILE__, __LINE__, __FUNCTION__, ## args); }
 #else
-#define E(fmt, args...) \
+#define MY_E(fmt, args...) \
     { LOGE("[Line] : %d; [Func] : %s; " fmt , __LINE__, __FUNCTION__, ## args); }
 #endif
 
@@ -274,7 +274,7 @@ extern "C" {
 {\
 	if ( 0 != ( (result) = (functionCall) ) )\
 	{\
-		E("Function call returned error : " #result " = %d.", result);\
+		MY_E("Function call returned error : " #result " = %d.", result);\
 		goto label;\
 	}\
 }
@@ -303,7 +303,7 @@ extern "C" {
 	if ( NULL == ( (pDest) = (type*)malloc(bug_len)))\
 	{\
         retVar = errCode;\
-        E("Failed to malloc %u bytes.", bug_len);\
+        MY_E("Failed to malloc %u bytes.", bug_len);\
 		goto label;\
 	}\
 	memset( (void*)(pDest), 0, sizeof(bug_len));\
@@ -326,14 +326,14 @@ extern "C" {
  */
 #define SET_ERROR_AND_JUMP(msgFmt, retVar, errCode, label, args...) \
 {\
-    E("To set '" #retVar "' to %d('" #errCode "') : " msgFmt, (errCode), ## args);\
+    MY_E("To set '" #retVar "' to %d('" #errCode "') : " msgFmt, (errCode), ## args);\
 	(retVar) = (errCode);\
 	goto label;\
 }
 
 #define EXIT_FOR_DEBUG \
 {\
-    E("To exit for debug.");\
+    MY_E("To exit for debug.");\
     return 1;\
 }
 
@@ -360,7 +360,7 @@ extern "C" {
     do { \
         if ( !(expect) ) \
         { \
-            E("assert('" #expect "') FAILED, to ABORT. " msgFmt, ## args); \
+            MY_E("assert('" #expect "') FAILED, to ABORT. " msgFmt, ## args); \
             abort(); \
         } \
     } while ( 0 )
@@ -418,7 +418,7 @@ inline static void dumpMemory(const void* pStart, uint32_t len)
     pBuf = (char*)malloc(bufLen); 
     if ( NULL == pBuf )
     {
-        E("no enough memory.");
+        MY_E("no enough memory.");
         return;
     }
 

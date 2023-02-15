@@ -53,7 +53,7 @@ bool ip_support_feature(mali_gralloc_ip producers, mali_gralloc_ip consumers, fe
 	const std::string name = feature_to_name(feature);
 	if ((producers & MALI_GRALLOC_IP_CPU || consumers & MALI_GRALLOC_IP_CPU) && !caps_supports_feature_cpu(feature))
 	{
-		MALI_GRALLOC_LOG(VERBOSE) << "Feature " << name << " not supported on CPU";
+		MALI_GRALLOC_LOG(INFO) << "Feature " << name << " not supported on CPU";
 		return false;
 	}
 
@@ -72,7 +72,7 @@ bool ip_support_feature(mali_gralloc_ip producers, mali_gralloc_ip consumers, fe
 		{
 			if (!handle.is_feature_supported(feature, ip_capability::permission_t::write))
 			{
-				MALI_GRALLOC_LOG(VERBOSE) << "Feature "<< name << " not supported on producer " << handle.get_path();
+				MALI_GRALLOC_LOG(INFO) << "Feature "<< name << " not supported on producer " << handle.get_path();
 				return false;
 			}
 		}
@@ -81,7 +81,7 @@ bool ip_support_feature(mali_gralloc_ip producers, mali_gralloc_ip consumers, fe
 		{
 			if (!handle.is_feature_supported(feature, ip_capability::permission_t::read))
 			{
-				MALI_GRALLOC_LOG(VERBOSE) << "Feature " << name << " not supported on consumer " << handle.get_path();
+				MALI_GRALLOC_LOG(INFO) << "Feature " << name << " not supported on consumer " << handle.get_path();
 				return false;
 			}
 		}

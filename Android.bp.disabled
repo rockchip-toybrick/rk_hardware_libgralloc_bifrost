@@ -55,6 +55,7 @@ arm_gralloc_cc_defaults {
     },
     header_libs: [
         "libgralloc_headers",
+        "libgralloc_headers_internal",
     ],
     target: {
         android: {

@@ -28,11 +28,7 @@
 
 #include <aidl/arm/graphics/ChromaSiting.h>
 
-namespace arm
-{
-namespace mapper
-{
-namespace common
+namespace arm::mapper::common
 {
 
 using aidl::android::hardware::graphics::common::BlendMode;
@@ -51,33 +47,35 @@ const static ExtendableType ChromaSiting_CositedBoth{
 	GRALLOC_ARM_CHROMA_SITING_TYPE_NAME, static_cast<int64_t>(aidl::arm::graphics::ChromaSiting::COSITED_BOTH)
 };
 
-void shared_metadata_init(void *memory, std::string_view name);
+void shared_metadata_init(void *memory, std::string_view name, Dataspace dataspace, const ExtendableType &chroma_siting);
 size_t shared_metadata_size();
 
-void get_name(const private_handle_t *hnd, std::string *name);
+void get_name(const imported_handle *hnd, std::string *name);
 
-void get_crop_rect(const private_handle_t *hnd, std::optional<Rect> *crop);
-android::status_t set_crop_rect(const private_handle_t *hnd, const Rect &crop_rectangle);
+void get_crop_rect(const imported_handle *hnd, std::optional<Rect> *crop);
+android::status_t set_crop_rect(const imported_handle *hnd, const Rect &crop_rectangle);
 
-void get_dataspace(const private_handle_t *hnd, std::optional<Dataspace> *dataspace);
-void set_dataspace(const private_handle_t *hnd, const Dataspace &dataspace);
+void get_dataspace(const imported_handle *hnd, std::optional<Dataspace> *dataspace);
+void set_dataspace(const imported_handle *hnd, const Dataspace &dataspace);
 
-void get_chroma_siting(const private_handle_t *hnd, std::optional<ExtendableType> *chroma_siting);
-void set_chroma_siting(const private_handle_t *hnd, const ExtendableType &chroma_siting);
+void get_chroma_siting(const imported_handle *hnd, std::optional<ExtendableType> *chroma_siting);
+void set_chroma_siting(const imported_handle *hnd, const ExtendableType &chroma_siting);
 
-void get_blend_mode(const private_handle_t *hnd, std::optional<BlendMode> *blend_mode);
-void set_blend_mode(const private_handle_t *hnd, const BlendMode &blend_mode);
+void get_blend_mode(const imported_handle *hnd, std::optional<BlendMode> *blend_mode);
+void set_blend_mode(const imported_handle *hnd, const BlendMode &blend_mode);
 
-void get_smpte2086(const private_handle_t *hnd, std::optional<Smpte2086> *smpte2086);
-android::status_t set_smpte2086(const private_handle_t *hnd, const std::optional<Smpte2086> &smpte2086);
+void get_smpte2086(const imported_handle *hnd, std::optional<Smpte2086> *smpte2086);
+android::status_t set_smpte2086(const imported_handle *hnd, const std::optional<Smpte2086> &smpte2086);
 
-void get_cta861_3(const private_handle_t *hnd, std::optional<Cta861_3> *cta861_3);
-android::status_t set_cta861_3(const private_handle_t *hnd, const std::optional<Cta861_3> &cta861_3);
+void get_cta861_3(const imported_handle *hnd, std::optional<Cta861_3> *cta861_3);
+android::status_t set_cta861_3(const imported_handle *hnd, const std::optional<Cta861_3> &cta861_3);
 
-void get_smpte2094_40(const private_handle_t *hnd, std::optional<std::vector<uint8_t>> *smpte2094_40);
-android::status_t set_smpte2094_40(const private_handle_t *hnd,
+void get_smpte2094_40(const imported_handle *hnd, std::optional<std::vector<uint8_t>> *smpte2094_40);
+android::status_t set_smpte2094_40(const imported_handle *hnd,
                                    const std::optional<std::vector<uint8_t>> &smpte2094_40);
 
-} // namespace common
-} // namespace mapper
-} // namespace arm
+void get_smpte2094_10(const imported_handle *hnd, std::optional<std::vector<uint8_t>> *smpte2094_10);
+android::status_t set_smpte2094_10(const imported_handle *hnd,
+                                   const std::optional<std::vector<uint8_t>> &smpte2094_10);
+
+} // namespace arm::mapper::common

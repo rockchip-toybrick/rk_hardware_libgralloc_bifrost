@@ -43,6 +43,7 @@
  * is not present.
  */
 
+/* Bits 28 - 31 are reserved for vendors */
 #define GRALLOC_USAGE_PRIVATE_0 1ULL << 28
 #define GRALLOC_USAGE_PRIVATE_1 1ULL << 29
 #define GRALLOC_USAGE_PRIVATE_2 1ULL << 30
@@ -65,6 +66,9 @@
 #define GRALLOC_USAGE_PRIVATE_17 1ULL << 50
 #define GRALLOC_USAGE_PRIVATE_18 1ULL << 49
 #define GRALLOC_USAGE_PRIVATE_19 1ULL << 48
+#define GRALLOC_USAGE_PRIVATE_20 1ULL << 47
+#define GRALLOC_USAGE_PRIVATE_21 1ULL << 46
+#define GRALLOC_USAGE_PRIVATE_22 1ULL << 45
 
 #define RK_GRALLOC_USAGE_ALLOC_HEIGHT_ALIGN_MASK (GRALLOC_USAGE_PRIVATE_4 | GRALLOC_USAGE_PRIVATE_5)
 /* 表征 "当前调用 alloc() 的 client 要求 buffer 的 alloc_height 是 8 对齐. */
@@ -109,6 +113,8 @@ typedef enum
 	*/
 	RK_GRALLOC_USAGE_WITHIN_4G = GRALLOC_USAGE_PRIVATE_11,
 
+	/*-------------------------------------------------------*/
+
 	/* See comment for Gralloc 1.0, above. */
 	MALI_GRALLOC_USAGE_FRONTBUFFER = GRALLOC_USAGE_PRIVATE_0,
 
@@ -129,16 +135,28 @@ typedef enum
 	MALI_GRALLOC_USAGE_RANGE_NARROW = GRALLOC_USAGE_PRIVATE_16,
 	MALI_GRALLOC_USAGE_RANGE_WIDE = GRALLOC_USAGE_PRIVATE_17,
 	MALI_GRALLOC_USAGE_RANGE_MASK = (GRALLOC_USAGE_PRIVATE_16 | GRALLOC_USAGE_PRIVATE_17),
+
+	MALI_GRALLOC_USAGE_CHROMA_SITING_CENTER = GRALLOC_USAGE_PRIVATE_20,
+	MALI_GRALLOC_USAGE_CHROMA_SITING_COSITED = GRALLOC_USAGE_PRIVATE_21,
+	MALI_GRALLOC_USAGE_CHROMA_SITING_CENTER_X = GRALLOC_USAGE_PRIVATE_22,
+	MALI_GRALLOC_USAGE_CHROMA_SITING_CENTER_Y = GRALLOC_USAGE_PRIVATE_20 | GRALLOC_USAGE_PRIVATE_21,
+	MALI_GRALLOC_USAGE_CHROMA_SITING_MASK =
+	    (GRALLOC_USAGE_PRIVATE_20 | GRALLOC_USAGE_PRIVATE_21 | GRALLOC_USAGE_PRIVATE_22),
+
 	/* AFRC coding unit sizes.
 	 * The Y and RGB coding unit sizes are encoded in vendor usage low bits to make them accessible
 	 * to the Vulkan swapchain implementation.
 	 */
+	// 220308: 目前 RK SoC 的 GPU 都不支持 AFRC, 相关的 usage flags 不会被使用.
 	MALI_GRALLOC_USAGE_AFRC_RGBA_LUMA_CODING_SIZE_DEFAULT = 0,
 	MALI_GRALLOC_USAGE_AFRC_RGBA_LUMA_CODING_SIZE_SENTINEL = GRALLOC_USAGE_PRIVATE_2,
-	MALI_GRALLOC_USAGE_AFRC_RGBA_LUMA_CODING_SIZE_16 = MALI_GRALLOC_USAGE_AFRC_RGBA_LUMA_CODING_SIZE_SENTINEL | GRALLOC_USAGE_PRIVATE_0,
-	MALI_GRALLOC_USAGE_AFRC_RGBA_LUMA_CODING_SIZE_24 = MALI_GRALLOC_USAGE_AFRC_RGBA_LUMA_CODING_SIZE_SENTINEL | GRALLOC_USAGE_PRIVATE_1,
+	MALI_GRALLOC_USAGE_AFRC_RGBA_LUMA_CODING_SIZE_16 =
+	    MALI_GRALLOC_USAGE_AFRC_RGBA_LUMA_CODING_SIZE_SENTINEL | GRALLOC_USAGE_PRIVATE_0,
+	MALI_GRALLOC_USAGE_AFRC_RGBA_LUMA_CODING_SIZE_24 =
+	    MALI_GRALLOC_USAGE_AFRC_RGBA_LUMA_CODING_SIZE_SENTINEL | GRALLOC_USAGE_PRIVATE_1,
 	MALI_GRALLOC_USAGE_AFRC_RGBA_LUMA_CODING_SIZE_32 = MALI_GRALLOC_USAGE_AFRC_RGBA_LUMA_CODING_SIZE_SENTINEL,
-	MALI_GRALLOC_USAGE_AFRC_RGBA_LUMA_CODING_SIZE_MASK = GRALLOC_USAGE_PRIVATE_2 | GRALLOC_USAGE_PRIVATE_1 | GRALLOC_USAGE_PRIVATE_0,
+	MALI_GRALLOC_USAGE_AFRC_RGBA_LUMA_CODING_SIZE_MASK =
+	    GRALLOC_USAGE_PRIVATE_2 | GRALLOC_USAGE_PRIVATE_1 | GRALLOC_USAGE_PRIVATE_0,
 
 	MALI_GRALLOC_USAGE_AFRC_CHROMA_CODING_SIZE_DEFAULT = 0,
 	MALI_GRALLOC_USAGE_AFRC_CHROMA_CODING_SIZE_16 = GRALLOC_USAGE_PRIVATE_11,
@@ -213,43 +231,65 @@ static_assert(GRALLOC_USAGE_FRONTBUFFER ==
 
 #endif /* !GRALLOC_HOST_BUILD */
 
-static const uint64_t VALID_USAGE =
-    GRALLOC_USAGE_SW_READ_MASK | /* 0x0FU */
-    GRALLOC_USAGE_SW_WRITE_MASK | /* 0xF0U */
-    GRALLOC_USAGE_HW_TEXTURE | /* 1U << 8 */
-    GRALLOC_USAGE_HW_RENDER | /* 1U << 9 */
-    GRALLOC_USAGE_HW_2D | /* 1U << 10 */
-    GRALLOC_USAGE_HW_COMPOSER | /* 1U << 11 */
-    GRALLOC_USAGE_HW_FB | /* 1U << 12 */
-    GRALLOC_USAGE_EXTERNAL_DISP | /* 1U << 13 */
-    GRALLOC_USAGE_PROTECTED | /* 1U << 14 */
-    GRALLOC_USAGE_CURSOR | /* 1U << 15 */
-    GRALLOC_USAGE_HW_VIDEO_ENCODER | /* 1U << 16 */
-    GRALLOC_USAGE_HW_CAMERA_WRITE | /* 1U << 17 */
-    GRALLOC_USAGE_HW_CAMERA_READ | /* 1U << 18 */
-    GRALLOC_USAGE_RENDERSCRIPT | /* 1U << 20 */
-    GRALLOC_USAGE_DECODER | /* 1U << 22 */
+static const uint64_t STANDARD_USAGE = GRALLOC_USAGE_SW_READ_MASK | /* 0x0FU */
+                                       GRALLOC_USAGE_SW_WRITE_MASK | /* 0xF0U */
+                                       GRALLOC_USAGE_HW_TEXTURE | /* 1U << 8 */
+                                       GRALLOC_USAGE_HW_RENDER | /* 1U << 9 */
+                                       GRALLOC_USAGE_HW_2D | /* 1U << 10 */
+                                       GRALLOC_USAGE_HW_COMPOSER | /* 1U << 11 */
+                                       GRALLOC_USAGE_HW_FB | /* 1U << 12 */
+                                       GRALLOC_USAGE_EXTERNAL_DISP | /* 1U << 13 */
+                                       GRALLOC_USAGE_PROTECTED | /* 1U << 14 */
+                                       GRALLOC_USAGE_CURSOR | /* 1U << 15 */
+                                       GRALLOC_USAGE_HW_VIDEO_ENCODER | /* 1U << 16 */
+                                       GRALLOC_USAGE_HW_CAMERA_WRITE | /* 1U << 17 */
+                                       GRALLOC_USAGE_HW_CAMERA_READ | /* 1U << 18 */
+                                       GRALLOC_USAGE_RENDERSCRIPT | /* 1U << 20 */
+                                       GRALLOC_USAGE_DECODER | /* 1U << 22 */
 
-    /* Producer and consumer usage are combined, but on Gralloc version 1 there is no way to differentiate these as they
-     * are mapped to the same value (1U << 23). */
-    GRALLOC_USAGE_SENSOR_DIRECT_DATA | /* 1U << 23 */
-    GRALLOC_USAGE_GPU_DATA_BUFFER | /* 1U << 24 */
+                                       /* Producer and consumer usage are combined, but on Gralloc version 1
+                                        *  there is no way to differentiate these as they
+                                        * are mapped to the same value (1U << 23). */
+                                       GRALLOC_USAGE_SENSOR_DIRECT_DATA | /* 1U << 23 */
+                                       GRALLOC_USAGE_GPU_DATA_BUFFER | /* 1U << 24 */
+                                       GRALLOC_USAGE_FRONTBUFFER; /* 1L << 32 */
 
-    GRALLOC_USAGE_FRONTBUFFER | /* 1L << 32 */
+static const uint64_t VENDOR_USAGE = GRALLOC_USAGE_PRIVATE_19 | /* 1U << 48 */
+                                     GRALLOC_USAGE_PRIVATE_18 | /* 1U << 49 */
+                                     GRALLOC_USAGE_PRIVATE_17 | /* 1U << 50 */
+                                     GRALLOC_USAGE_PRIVATE_16 | /* 1U << 51 */
+                                     GRALLOC_USAGE_PRIVATE_15 | /* 1U << 52 */
+                                     GRALLOC_USAGE_PRIVATE_14 | /* 1U << 53 */
+                                     GRALLOC_USAGE_PRIVATE_13 | /* 1U << 54 */
+                                     GRALLOC_USAGE_PRIVATE_12 | /* 1U << 55 */
+                                     GRALLOC_USAGE_PRIVATE_11 | /* 1U << 56 */
+                                     GRALLOC_USAGE_PRIVATE_10 | /* 1U << 57 */
+                                     GRALLOC_USAGE_PRIVATE_9 | /* 1U << 58 */
+                                     GRALLOC_USAGE_PRIVATE_8 | /* 1U << 59 */
+                                     GRALLOC_USAGE_PRIVATE_7 | /* 1U << 60 */
+                                     GRALLOC_USAGE_PRIVATE_0 | /* 1U << 28 */
+                                     GRALLOC_USAGE_PRIVATE_1 | /* 1U << 29 */
+                                     GRALLOC_USAGE_PRIVATE_2 | /* 1U << 30 */
+                                     GRALLOC_USAGE_PRIVATE_3 | /* 1U << 31 */
+                                     GRALLOC_USAGE_PRIVATE_4 | /* 1U << 63 */
+                                     GRALLOC_USAGE_PRIVATE_5 ; /* 1U << 62 */
 
-    GRALLOC_USAGE_PRIVATE_19 | /* 1U << 48 */
-    GRALLOC_USAGE_PRIVATE_18 | /* 1U << 49 */
-    GRALLOC_USAGE_PRIVATE_17 | /* 1U << 50 */
-    GRALLOC_USAGE_PRIVATE_16 | /* 1U << 51 */
-    GRALLOC_USAGE_PRIVATE_15 | /* 1U << 52 */
-    GRALLOC_USAGE_PRIVATE_14 | /* 1U << 53 */
-    GRALLOC_USAGE_PRIVATE_13 | /* 1U << 54 */
-    GRALLOC_USAGE_PRIVATE_12 | /* 1U << 55 */
-    GRALLOC_USAGE_PRIVATE_11 | /* 1U << 56 */
-    GRALLOC_USAGE_PRIVATE_0 | /* 1U << 28 */
-    GRALLOC_USAGE_PRIVATE_1 | /* 1U << 29 */
-    GRALLOC_USAGE_PRIVATE_2 | /* 1U << 30 */
-    GRALLOC_USAGE_PRIVATE_3; /* 1U << 31 */
+static const uint64_t VALID_USAGE = STANDARD_USAGE | VENDOR_USAGE;
+
+/* Describes the usages that should be available for all formats */
+static const uint64_t UNIVERSAL_USAGES =
+    GRALLOC_USAGE_PROTECTED | GRALLOC_USAGE_SW_READ_MASK | GRALLOC_USAGE_SW_WRITE_MASK;
+
+/**
+ * @brief Generates permitted usages for a format.
+ *
+ * @param usages Permitted usages for a specific format.
+ * @return Permitted format usages with any universal modifiers applied.
+ */
+constexpr uint64_t add_universal_usages(uint64_t usages)
+{
+	return usages | UNIVERSAL_USAGES;
+}
 
 /*
  * Determines whether frontbuffer usage is enabled.

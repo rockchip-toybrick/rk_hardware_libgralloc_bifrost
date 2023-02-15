@@ -18,17 +18,17 @@
  */
 #pragma once
 
-struct private_handle_t;
+#include "core/buffer.h"
 
-int mali_gralloc_lock(buffer_handle_t buffer, uint64_t usage, int l, int t, int w, int h,
+int mali_gralloc_lock(imported_handle *buffer, uint64_t usage, int l, int t, int w, int h,
                       void **vaddr);
-int mali_gralloc_lock_ycbcr(buffer_handle_t buffer, uint64_t usage, int l, int t, int w,
+int mali_gralloc_lock_ycbcr(imported_handle *buffer, uint64_t usage, int l, int t, int w,
                             int h, android_ycbcr *ycbcr);
-int mali_gralloc_unlock(buffer_handle_t buffer);
+int mali_gralloc_unlock(imported_handle *buffer);
 
-int mali_gralloc_get_num_flex_planes(buffer_handle_t buffer, uint32_t *num_planes);
-int mali_gralloc_lock_flex(buffer_handle_t buffer, uint64_t usage, int l, int t,
+int mali_gralloc_get_num_flex_planes(private_handle_t *buffer, uint32_t *num_planes);
+int mali_gralloc_lock_flex(imported_handle *buffer, uint64_t usage, int l, int t,
                                  int w, int h, struct android_flex_layout *flex_layout);
 
-int mali_map_buffer(private_handle_t *hnd);
-void mali_unmap_buffer(private_handle_t *hnd);
+int mali_map_buffer(imported_handle *hnd);
+void mali_unmap_buffer(imported_handle *hnd);

@@ -41,7 +41,8 @@ typedef struct
 	uint16_t height;
 } rect_t;
 
-/*
+/* clang-format: off */
+/**
  * Pixel format information.
  *
  * These properties are used by gralloc for buffer allocation.
@@ -71,6 +72,7 @@ struct format_info_t
 	bool flex;                      /* Linear version of format can be represented as flex. */
 	bool block_linear;              /* Format supports 16x16 Block Linear layout */
 	bool afrc;                      /* AFRC supported (per specification and by gralloc). IP support not considered. */
+	uint64_t permitted_usage;       /* Buffer usage mask*/
 
 	/* Computes the total number of components in the format. */
 	int total_components() const
@@ -83,6 +85,7 @@ struct format_info_t
 		return sum;
 	}
 };
+/* clang-format: on */
 
 /* Returns true if the formats are the same or if they only differ with respect to the order of components.
 	False otherwise. */
@@ -91,7 +94,6 @@ static inline bool is_same_or_components_reordered(const format_info_t &x, const
 	return x.npln == y.npln && x.total_components() == y.total_components() && x.bps == y.bps && x.is_yuv == y.is_yuv &&
 	       x.hsub == y.hsub && x.vsub == y.vsub;
 }
-
 
 typedef struct
 {

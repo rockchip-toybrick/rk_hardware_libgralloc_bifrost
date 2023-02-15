@@ -111,7 +111,6 @@ typedef enum
 	 */
 	MALI_GRALLOC_FORMAT_INTERNAL_YUV420_8BIT_I,
 	MALI_GRALLOC_FORMAT_INTERNAL_YUV420_10BIT_I,
-	MALI_GRALLOC_FORMAT_INTERNAL_YUV444_10BIT_I,
 
 	/* The three formats below are remapped version of the corresponding HAL formats.
 	 * We remap these formats as they have large numerical values that do not fit

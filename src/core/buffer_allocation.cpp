@@ -758,7 +758,7 @@ static void calc_allocation_size(const int width,
 					break;
 
 				default:
-					E("unexpected 'usage_flag_for_stride_alignment': 0x%" PRIx64,
+					MY_E("unexpected 'usage_flag_for_stride_alignment': 0x%" PRIx64,
 					  usage_flag_for_stride_alignment);
 					break;
 				}
@@ -810,7 +810,7 @@ static void calc_allocation_size(const int width,
 					break;
 
 				default:
-					E("unexpected 'usage_flag_for_stride_alignment': 0x%" PRIx64,
+					MY_E("unexpected 'usage_flag_for_stride_alignment': 0x%" PRIx64,
 					  usage_flag_for_stride_alignment);
 					break;
 				}
@@ -1035,7 +1035,7 @@ int mali_gralloc_derive_format_and_size(buffer_descriptor_t *descriptor)
 	{
 		return -EINVAL;
 	}
-	MALI_GRALLOC_LOG(VERBOSE) << "alloc_format: " << descriptor->alloc_format;
+	MALI_GRALLOC_LOG(INFO) << "alloc_format: " << descriptor->alloc_format;
 
 	/*
 	 * Obtain allocation type (uncompressed, AFBC basic, etc...)
@@ -1155,36 +1155,23 @@ int mali_gralloc_derive_format_and_size(buffer_descriptor_t *descriptor)
 }
 
 
-int mali_gralloc_buffer_allocate(buffer_descriptor_t *descriptor, private_handle_t **out_handle)
+unique_private_handle mali_gralloc_buffer_allocate(buffer_descriptor_t *descriptor)
 {
 	int err = mali_gralloc_derive_format_and_size(descriptor);
 	if (err != 0)
 	{
-		return err;
+		MALI_GRALLOC_LOGE("buffer allocation failed: %s", strerror(-err));
+		return nullptr;
 	}
 
-	int ret = allocator_allocate(descriptor, out_handle);
-	if (ret != 0)
+	auto handle = allocator_allocate(descriptor);
+	if (handle == nullptr)
 	{
-		return ret;
+		MALI_GRALLOC_LOGE("buffer allocation failed: %s", strerror(ENOMEM));
+		return nullptr;
 	}
 
-	(*out_handle)->backing_store_id = getUniqueId();
+	handle->backing_store_id = getUniqueId();
 
-	return 0;
-}
-
-int mali_gralloc_buffer_free(private_handle_t *hnd)
-{
-	if (hnd == nullptr)
-	{
-		return -1;
-	}
-
-	allocator_free(hnd);
-	gralloc_shared_memory_free(hnd->share_attr_fd, hnd->attr_base, hnd->attr_size);
-	hnd->share_fd = hnd->share_attr_fd = -1;
-	hnd->base = hnd->attr_base = MAP_FAILED;
-
-	return 0;
+	return handle;
 }

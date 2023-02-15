@@ -82,7 +82,7 @@ const static std::unordered_map<mali_gralloc_internal_format, table_entry> table
 uint32_t drm_fourcc_from_handle(const private_handle_t *hnd)
 {
 	/* Clean the modifier bits in the internal format. */
-	const auto internal_format = hnd->get_alloc_format();
+	const auto internal_format = hnd->alloc_format;
 	const auto base_format = internal_format.get_base();
 
 	auto entry = table.find(base_format);
@@ -102,7 +102,7 @@ uint32_t drm_fourcc_from_handle(const private_handle_t *hnd)
 
 static uint64_t get_afrc_modifier_tags(const private_handle_t *hnd)
 {
-	const auto internal_format = hnd->get_alloc_format();
+	const auto internal_format = hnd->alloc_format;
 	if (!internal_format.is_afrc())
 	{
 		return 0;
@@ -172,7 +172,7 @@ static uint64_t get_afrc_modifier_tags(const private_handle_t *hnd)
 
 static uint64_t get_afbc_modifier_tags(const private_handle_t *hnd)
 {
-	const auto internal_format = hnd->get_alloc_format();
+	const auto internal_format = hnd->alloc_format;
 	if (!internal_format.is_afbc())
 	{
 		return 0;
@@ -246,7 +246,7 @@ static uint64_t get_afbc_modifier_tags(const private_handle_t *hnd)
 
 uint64_t drm_modifier_from_handle(const private_handle_t *hnd)
 {
-	auto alloc_format = hnd->get_alloc_format();
+	auto alloc_format = hnd->alloc_format;
 	if (alloc_format.is_afbc())
 	{
 		return get_afbc_modifier_tags(hnd);

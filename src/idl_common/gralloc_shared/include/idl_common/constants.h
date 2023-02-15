@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Arm Limited. All rights reserved.
- *
- * Copyright (C) 2008 The Android Open Source Project
+ * Copyright (C) 2022 Arm Limited.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +16,19 @@
 
 #pragma once
 
-#include <stdint.h>
-#include <utility>
+#include <cstdint>
 
-#include <android-base/unique_fd.h>
+namespace arm::mapper::common
+{
+
+/* This size is the upper bound to store a complete SMPTE 2094-40 bitstream. */
+constexpr uint32_t smpte2094_40_size = 1268;
 
 /*
- * Allocates a shared memory file of the given size.
- * Returns -1 on failure.
+ * This size is intended as an upper bound to a store a complete SMPTE 2094-10 bitstream.
+ * The value has been calculated based on reasonable expectations; however, it may need to be
+ * increased for exceptional use-cases.
  */
-android::base::unique_fd gralloc_shared_memory_allocate(const char *name, off_t size);
+constexpr uint32_t smpte2094_10_size = 4829;
+
+}

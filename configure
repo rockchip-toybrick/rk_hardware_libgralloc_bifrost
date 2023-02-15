@@ -50,9 +50,6 @@ fi
 SELECTED_PLATFORM=0
 for arg in "$@"; do
     case $arg in
-    ANDROID_11=y)
-        SELECTED_PLATFORM=11
-        ;;
     ANDROID_12=y)
         SELECTED_PLATFORM=12
         ;;
@@ -179,15 +176,8 @@ else
     enable "build_vintf/Android.bp.disabled.no_vintf"
 fi
 
-if [ $PLATFORM_VERSION -eq 11 ]; then
-    # Enable ion allocator
-    enable "src/allocator/ion/Android.bp.disabled"
-fi
-
-if [ $PLATFORM_VERSION -ge 12 ]; then
-    # Enable dma_buf heaps
-    enable "src/allocator/dma_buf_heaps/Android.bp.disabled"
-fi
+# Enable dma_buf heaps
+enable "src/allocator/dma_buf_heaps/Android.bp.disabled"
 
 
 command popd > /dev/null

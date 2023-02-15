@@ -50,49 +50,40 @@ Return<void> GrallocAllocator::allocate(const BufferDescriptor &descriptor, uint
 	CHECK_EQ(buffer_descriptor.flags, mapper::common::DESCRIPTOR_ALLOCATOR_FLAGS);
 
 	auto result = common::allocate(&buffer_descriptor, count);
-	switch (result.first)
+	if (!result.has_value())
 	{
-	case android::NO_ERROR:
-		break;
-	case android::NO_MEMORY:
-		hidl_cb(Error::NO_RESOURCES, 0, hidl_vec<hidl_handle>());
-		return Void();
-	case android::BAD_VALUE:
-		hidl_cb(Error::UNSUPPORTED, 0, hidl_vec<hidl_handle>());
-		return Void();
-	default:
-		MALI_GRALLOC_LOGE("Unknown allocation error %d\n", result.first);
-		hidl_cb(Error::UNSUPPORTED, 0, hidl_vec<hidl_handle>());
-		return Void();
+		switch (result.error())
+		{
+		case android::NO_ERROR:
+			break;
+		case android::NO_MEMORY:
+			hidl_cb(Error::NO_RESOURCES, 0, hidl_vec<hidl_handle>());
+			return Void();
+		case android::BAD_VALUE:
+			hidl_cb(Error::UNSUPPORTED, 0, hidl_vec<hidl_handle>());
+			return Void();
+		default:
+			MALI_GRALLOC_LOGE("Unknown allocation error %d\n", result.error());
+			hidl_cb(Error::UNSUPPORTED, 0, hidl_vec<hidl_handle>());
+			return Void();
+		}
 	}
 
-	CHECK_EQ(count, result.second.size());
+	CHECK_EQ(count, result->size());
 
 	/* Populate handles for use by the caller. The hidl handles should not own the native handles and leave the
 	 * responsibility of destroying the handles to this allocator process. */
 	std::vector<hidl_handle> hidl_handles;
 	hidl_handles.reserve(count);
 
-	for (const native_handle_t *native_handle : result.second)
+	for (const auto &native_handle_ptr : *result)
 	{
-		hidl_handles.emplace_back(hidl_handle(native_handle));
+		hidl_handles.emplace_back(hidl_handle(native_handle_ptr.get()));
 	}
 
 	CHECK_EQ(count, hidl_handles.size());
+	hidl_cb(Error::NONE, buffer_descriptor.pixel_stride, hidl_handles);
 
-	hidl_vec<hidl_handle> out_handles;
-	out_handles.setToExternal(hidl_handles.data(), hidl_handles.size());
-
-	hidl_cb(Error::NONE, buffer_descriptor.pixel_stride, out_handles);
-
-	/* The application should import the Gralloc buffers using IMapper for
-	 * further usage. Free the allocated buffers in IAllocator context.
-	 */
-	for (const auto &native_handle : result.second)
-	{
-		mali_gralloc_buffer_free(private_handle_t::downcast(native_handle));
-		native_handle_delete(const_cast<native_handle_t *>(native_handle));
-	}
 	return Void();
 }
 

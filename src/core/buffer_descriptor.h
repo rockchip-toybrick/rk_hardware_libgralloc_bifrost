@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2022 Arm Limited. All rights reserved.
+ * Copyright (C) 2016-2023 Arm Limited. All rights reserved.
  *
  * Copyright (C) 2008 The Android Open Source Project
  *
@@ -22,6 +22,8 @@
 
 #include "buffer.h"
 #include "internal_format.h"
+
+#define MAX_STRING_LENGTH 127
 
 /* Flags to describe additional buffer descriptor information */
 enum buffer_descriptor_flags : uint32_t
@@ -46,7 +48,7 @@ struct buffer_descriptor_t
 	uint64_t consumer_usage{};
 	uint64_t hal_format{};
 	uint32_t layer_count{};
-	std::string name{ "Unnamed" };
+	std::array<char, MAX_STRING_LENGTH + 1> name{};
 	uint64_t reserved_size{};
 
 	/*

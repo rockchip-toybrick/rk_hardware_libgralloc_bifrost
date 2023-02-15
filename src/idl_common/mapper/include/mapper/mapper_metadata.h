@@ -70,7 +70,7 @@ void get_metadata(const private_handle_t *handle, const IMapper::MetadataType &m
  * @return Error::NONE on success.
  *         Error::UNSUPPORTED on error when writing or unsupported metadata type.
  */
-Error set_metadata(const private_handle_t *handle, const IMapper::MetadataType &metadataType,
+Error set_metadata(const imported_handle *handle, const IMapper::MetadataType &metadataType,
                    const hidl_vec<uint8_t> &metadata);
 
 /**

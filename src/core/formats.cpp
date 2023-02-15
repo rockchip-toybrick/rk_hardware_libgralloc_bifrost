@@ -266,7 +266,7 @@ void mali_gralloc_adjust_dimensions(const internal_format_t alloc_format, const 
 		}
 	}
 
-	MALI_GRALLOC_LOG(VERBOSE) << __FUNCTION__ << ": alloc_format=" << alloc_format << " usage=" << std::showbase
+	MALI_GRALLOC_LOG(INFO) << __FUNCTION__ << ": alloc_format=" << alloc_format << " usage=" << std::showbase
 	                          << std::hex << usage << std::dec << " alloc_width=" << *width
 	                          << ", alloc_height=" << *height;
 }
@@ -832,7 +832,7 @@ static std::optional<fmt_props_t> get_supported_format(const format_info_t &fmt_
 	}
 
 	auto fmt_flags = is_format_supported(fmt_info, *fmt_ip_support, usage, producers, consumers);
-	MALI_GRALLOC_LOG(VERBOSE) << "Format " << fmt_info.id << ": IP support: 0x" << std::hex << fmt_flags;
+	MALI_GRALLOC_LOG(INFO) << "Format " << fmt_info.id << ": IP support: 0x" << std::hex << fmt_flags;
 
 	if (fmt_flags == F_NONE && consumers.contains(MALI_GRALLOC_IP_GPU) && consumers.contains(MALI_GRALLOC_IP_DPU))
 	{
@@ -858,7 +858,7 @@ static std::optional<fmt_props_t> get_supported_format(const format_info_t &fmt_
 		if (afrc_format.is_afrc())
 		{
 			fmt_props_t ret{ F_AFRC, afrc_format };
-			MALI_GRALLOC_LOG(VERBOSE) << "AFRC format: " << ret.format;
+			MALI_GRALLOC_LOG(INFO) << "AFRC format: " << ret.format;
 			return ret;
 		}
 	}
@@ -868,7 +868,7 @@ static std::optional<fmt_props_t> get_supported_format(const format_info_t &fmt_
 		if (gralloc_usage_is_no_afbc(usage))
 		{
 			/* Disable AFBC when forced by usage. */
-			MALI_GRALLOC_LOG(VERBOSE) << "AFBC explicitly disabled via usage";
+			MALI_GRALLOC_LOG(INFO) << "AFBC explicitly disabled via usage";
 		}
 		else
 		{
@@ -880,7 +880,7 @@ static std::optional<fmt_props_t> get_supported_format(const format_info_t &fmt_
 				if (alloc_type.has_value() && (fmt_info.npln == 1 || alloc_type->is_multi_plane))
 				{
 					fmt_props_t ret{ F_AFBC, afbc_format };
-					MALI_GRALLOC_LOG(VERBOSE) << "AFBC format: " << ret.format;
+					MALI_GRALLOC_LOG(INFO) << "AFBC format: " << ret.format;
 					return ret;
 				}
 			}
@@ -893,7 +893,7 @@ static std::optional<fmt_props_t> get_supported_format(const format_info_t &fmt_
 		if (bl_format.is_block_linear())
 		{
 			fmt_props_t ret{ F_BL_YUV, bl_format };
-			MALI_GRALLOC_LOG(VERBOSE) << "BL format: " << ret.format;
+			MALI_GRALLOC_LOG(INFO) << "BL format: " << ret.format;
 			return ret;
 		}
 	}
@@ -901,11 +901,11 @@ static std::optional<fmt_props_t> get_supported_format(const format_info_t &fmt_
 	if (fmt_flags & F_LIN)
 	{
 		fmt_props_t ret{ F_LIN, base_format };
-		MALI_GRALLOC_LOG(VERBOSE) << "LIN format: " << ret.format;
+		MALI_GRALLOC_LOG(INFO) << "LIN format: " << ret.format;
 		return ret;
 	}
 
-	MALI_GRALLOC_LOG(VERBOSE) << "No format selected";
+	MALI_GRALLOC_LOG(INFO) << "No format selected";
 	return std::nullopt;
 }
 
@@ -1103,7 +1103,7 @@ static internal_format_t get_best_format(const uint32_t req_base_format, const u
 			if (sup_fmt_grade)
 			{
 				num_supported_formats++;
-				MALI_GRALLOC_LOG(VERBOSE)
+				MALI_GRALLOC_LOG(INFO)
 				    << "Supported: Format: " << fmt->format << ", Flags: " << std::showbase << std::hex << fmt->f_flags;
 
 				/* 3. Find best modifiers from supported base formats */
@@ -1141,7 +1141,7 @@ static internal_format_t get_best_format(const uint32_t req_base_format, const u
 		}
 	}
 
-	MALI_GRALLOC_LOG(VERBOSE) << "Selected format: " << alloc_format;
+	MALI_GRALLOC_LOG(INFO) << "Selected format: " << alloc_format;
 	return alloc_format;
 }
 
@@ -1236,10 +1236,25 @@ static internal_format_t select_best_format(const buffer_descriptor_t &descripto
 	const mali_gralloc_android_format req_format = descriptor.hal_format;
 	const uint32_t req_base_format = get_internal_format(req_format);
 	const auto *format_info = get_format_info(req_base_format);
+
 	if (req_base_format == MALI_GRALLOC_FORMAT_INTERNAL_UNDEFINED || format_info == nullptr)
 	{
 		MALI_GRALLOC_LOGE("Invalid base format! req_base_format = 0x%" PRIx32 ", req_format = 0x%" PRIx32,
 		                  req_base_format, req_format);
+		return internal_format_t::invalid;
+	}
+
+	/* Verify the usage restrictions (format_info->permitted_usage) for this format match the value of 'usage'
+	 * (ignoring the VENDOR_USAGE). */
+	const auto permitted_format_usage = format_info->permitted_usage;
+	if (((permitted_format_usage | usage) & ~VENDOR_USAGE) != (permitted_format_usage & ~VENDOR_USAGE))
+	{
+		MALI_GRALLOC_LOGE("Usage not permitted! format = %#" PRIx32 ", permitted usage bits = %#" PRIx64
+		                  ",usage = %#" PRIx64 ", invalid usage bits: %#" PRIx64,
+		                  format_info->id, static_cast<uint64_t>(permitted_format_usage) & ~VENDOR_USAGE,
+		                  static_cast<uint64_t>(usage) & ~VENDOR_USAGE,
+		                  ((~permitted_format_usage & usage) & ~VENDOR_USAGE));
+
 		return internal_format_t::invalid;
 	}
 
@@ -1740,7 +1755,7 @@ internal_format_t mali_gralloc_select_format(const buffer_descriptor_t &descript
 		alloc_format = select_best_format(descriptor, usage);
 	}
 
-	MALI_GRALLOC_LOG(VERBOSE) << "mali_gralloc_select_format: req_format=" << std::showbase << std::hex << req_format
+	MALI_GRALLOC_LOG(INFO) << "mali_gralloc_select_format: req_format=" << std::showbase << std::hex << req_format
 	                          << ", usage=" << usage << ", alloc_format=" << alloc_format;
 	return alloc_format;
 #endif

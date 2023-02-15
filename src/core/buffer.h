@@ -25,6 +25,7 @@
 #include <cstring>
 #include <new>
 
+#include <android-base/scopeguard.h>
 #include <android-base/unique_fd.h>
 #include <cutils/native_handle.h>
 #include <unistd.h>
@@ -98,6 +99,12 @@ using plane_layout = std::array<plane_info_t, max_planes>;
 /* Forward declarations of C++ types. */
 class internal_format_t;
 
+enum class handle_type : int
+{
+	raw,
+	imported,
+};
+
 /*
  * The following code is gralloc's implementation of the native_handle data structure provided
  * by cutils/native_handle.h. Its purpose is to permit transfer of file descriptors and buffer
@@ -112,6 +119,8 @@ class internal_format_t;
  */
 struct private_handle_t : public native_handle
 {
+	static constexpr handle_type this_type = handle_type::raw;
+
 	/*
 	 * Shared file descriptor for dma_buf sharing. This must be the first element in the
 	 * structure so that binder knows where it is and can properly share it between
@@ -159,27 +168,13 @@ struct private_handle_t : public native_handle
 	int size{};
 	int layer_count{};
 
-	union
-	{
-		void *base{nullptr};
-		uint64_t base_padding;
-	};
 	uint64_t backing_store_id{};
-	std::atomic<int> lock_count{};
-	int cpu_write{};              /**< Buffer is locked for CPU write when non-zero. */
-	int import_pid{-1};
-
-	// locally mapped shared attribute area
-	union
-	{
-		void *attr_base{MAP_FAILED};
-		uint64_t attr_base_padding;
-	};
 
 	/* Size of the attribute shared region in bytes. */
 	uint64_t attr_size{};
 
 	uint64_t reserved_region_size{};
+	handle_type type{handle_type::raw};
 
 	/**
 	 * This magic number is used to check that the native_handle passed to Gralloc is our private_handle_t type.
@@ -207,42 +202,138 @@ struct private_handle_t : public native_handle
 		numInts = PRIVATE_HANDLE_NUM_INTS;
 	}
 
-	static int validate(const native_handle *h)
-	{
-		const private_handle_t *hnd = (const private_handle_t *)h;
-		if (!h || h->version != sizeof(native_handle) ||
-		    h->numFds + h->numInts != PRIVATE_HANDLE_NUM_INTS + PRIVATE_HANDLE_NUM_FDS ||
-		    hnd->magic != sMagic)
-		{
-			return -EINVAL;
-		}
-		return 0;
-	}
-
 	bool is_multi_plane() const
 	{
 		/* For multi-plane, the byte stride for the second plane will always be non-zero. */
 		return (plane_info[1].alloc_width != 0);
 	}
-
-	static private_handle_t *downcast(const native_handle *in)
-	{
-		if (validate(in) == 0)
-		{
-			return (private_handle_t *)in;
-		}
-
-		return nullptr;
-	}
-
-	internal_format_t get_alloc_format() const;
 };
+
+struct imported_handle : private_handle_t
+{
+	static constexpr handle_type this_type = handle_type::imported;
+
+	std::atomic<int> lock_count{};
+	int cpu_write{};              /**< Buffer is locked for CPU write when non-zero. */
+	int import_pid{-1};
+	void *base{nullptr};
+	void *attr_base{MAP_FAILED};
+};
+
+#define IMPORTED_HANDLE_NUM_INTS ((sizeof(imported_handle) - sizeof(private_handle_t)) / sizeof(int))
+static_assert(alignof(private_handle_t) == alignof(imported_handle));
 
 /* Check the correctness of the macros defined in gralloc/testing.h */
 static_assert(MALI_GRALLOC_HANDLE_WIDTH_OFFSET == offsetof(private_handle_t, width));
 static_assert(MALI_GRALLOC_HANDLE_HEIGHT_OFFSET == offsetof(private_handle_t, height));
 
-private_handle_t *make_private_handle(int size, uint64_t consumer_usage,
-                                      uint64_t producer_usage, android::base::unique_fd shared_fd,
-                                      int required_format, internal_format_t allocated_format, int width, int height,
-                                      int layer_count, const plane_layout &plane_info, int stride);
+template <typename T>
+T *handle_cast(native_handle *x)
+{
+	auto handle = static_cast<private_handle_t *>(x);
+	if (handle == nullptr)
+	{
+		MALI_GRALLOC_LOGE("bad handle (nullptr)");
+		return nullptr;
+	}
+	else if (handle->version != sizeof(native_handle))
+	{
+		MALI_GRALLOC_LOGE("bad handle: version %d", handle->version);
+		return nullptr;
+	}
+	else if (handle->numFds != PRIVATE_HANDLE_NUM_FDS)
+	{
+		MALI_GRALLOC_LOGE("bad handle: numFds = %d", handle->numFds);
+		return nullptr;
+	}
+	else if (handle->numInts != PRIVATE_HANDLE_NUM_INTS)
+	{
+		MALI_GRALLOC_LOGE("bad handle: numInts = %d", handle->numInts);
+		return nullptr;
+	}
+	else if (handle->magic != private_handle_t::sMagic)
+	{
+		MALI_GRALLOC_LOGE("bad handle: magic = %#x", handle->magic);
+		return nullptr;
+	}
+	else if (handle->type < T::this_type)
+	{
+		MALI_GRALLOC_LOGW("handle not imported");
+		return nullptr;
+	}
+	else
+	{
+		return static_cast<T *>(x);
+	}
+}
+
+template <typename T>
+T *handle_cast(const native_handle *x)
+{
+	return handle_cast<T>(const_cast<native_handle *>(x));
+}
+
+struct native_handle_deleter
+{
+	void operator()(native_handle_t *native_handle)
+	{
+		native_handle_close(native_handle);
+		native_handle_delete(native_handle);
+	}
+};
+
+template <typename T>
+using unique_handle = std::unique_ptr<T, native_handle_deleter>;
+
+using unique_native_handle = unique_handle<native_handle_t>;
+using unique_private_handle = unique_handle<private_handle_t>;
+using unique_imported_handle = unique_handle<imported_handle>;
+
+unique_private_handle make_private_handle(int size, uint64_t consumer_usage,
+                                          uint64_t producer_usage, android::base::unique_fd shared_fd,
+                                          int required_format, internal_format_t allocated_format, int width, int height,
+                                          int layer_count, const plane_layout &plane_info, int stride);
+
+static inline unique_imported_handle make_imported_handle(private_handle_t *raw_handle)
+{
+	auto *new_handle = native_handle_create(PRIVATE_HANDLE_NUM_FDS, PRIVATE_HANDLE_NUM_INTS + IMPORTED_HANDLE_NUM_INTS);
+	if (new_handle == nullptr)
+	{
+		return nullptr;
+	}
+
+	/*
+	 * The numInts member of an imported handle is altered so that its data is never
+	 * copied by native_handle_clone and therefore never transferred across between
+	 * processes.
+	 */
+	new_handle->numInts = PRIVATE_HANDLE_NUM_INTS;
+	new_handle->numFds = 0;
+
+	auto import_handle = unique_imported_handle{static_cast<imported_handle *>(new_handle)};
+
+	/* Clone file descriptors with care. */
+	for (int i = 0; i < PRIVATE_HANDLE_NUM_FDS; ++i)
+	{
+		import_handle->data[i] = dup(raw_handle->data[i]);
+		if (import_handle->data[i] == -1)
+		{
+			return nullptr;
+		}
+		else
+		{
+			++import_handle->numFds;
+		}
+	}
+
+	/* Copy shared portion of handle metadata. */
+	for (int i = PRIVATE_HANDLE_NUM_FDS; i < PRIVATE_HANDLE_NUM_FDS + PRIVATE_HANDLE_NUM_INTS; ++i)
+	{
+		import_handle->data[i] = raw_handle->data[i];
+	}
+
+	/* Overwrite handle type. */
+	import_handle->type = handle_type::imported;
+
+	return import_handle;
+}

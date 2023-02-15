@@ -38,6 +38,7 @@ const std::vector<format_info_t> formats = {
 		.hsub = 0, .vsub = 0, .align_w = 1, .align_h = 1, ALIGN_W_CPU_DEFAULT,
 		.tile_size = 1, .has_alpha = false, .is_rgb = true, .is_yuv = false,
 		.afbc = true, .linear = true, .yuv_transform = true, .flex = false, .block_linear = false, .afrc = false,
+		.permitted_usage = add_universal_usages(STANDARD_USAGE),
 	},
 	{
 		.id = MALI_GRALLOC_FORMAT_INTERNAL_RGB_888,
@@ -45,6 +46,7 @@ const std::vector<format_info_t> formats = {
 		.hsub = 0, .vsub = 0, .align_w = 1, .align_h = 1, ALIGN_W_CPU_DEFAULT,
 		.tile_size = 1, .has_alpha = false, .is_rgb = true, .is_yuv = false,
 		.afbc = true, .linear = true, .yuv_transform = true, .flex = true, .block_linear = false, .afrc = true,
+		.permitted_usage = add_universal_usages(STANDARD_USAGE),
 	},
 	{
 		.id = MALI_GRALLOC_FORMAT_INTERNAL_BGR_888,
@@ -59,6 +61,7 @@ const std::vector<format_info_t> formats = {
 		.hsub = 0, .vsub = 0, .align_w = 1, .align_h = 1, ALIGN_W_CPU_DEFAULT,
 		.tile_size = 1, .has_alpha = true, .is_rgb = true, .is_yuv = false,
 		.afbc = true, .linear = true, .yuv_transform = true, .flex = true, .block_linear = false, .afrc = true,
+		.permitted_usage = add_universal_usages(STANDARD_USAGE),
 	},
 	{
 		.id = MALI_GRALLOC_FORMAT_INTERNAL_BGRA_8888,
@@ -66,6 +69,7 @@ const std::vector<format_info_t> formats = {
 		.hsub = 0, .vsub = 0, .align_w = 1, .align_h = 1, ALIGN_W_CPU_DEFAULT,
 		.tile_size = 1, .has_alpha = true, .is_rgb = true, .is_yuv = false,
 		.afbc = true, .linear = true, .yuv_transform = false, .flex = true, .block_linear = false, .afrc = false,
+		.permitted_usage = add_universal_usages(STANDARD_USAGE),
 	},
 	{
 		.id = MALI_GRALLOC_FORMAT_INTERNAL_RGBX_8888,
@@ -73,6 +77,7 @@ const std::vector<format_info_t> formats = {
 		.hsub = 0, .vsub = 0, .align_w = 1, .align_h = 1, ALIGN_W_CPU_DEFAULT,
 		.tile_size = 1, .has_alpha = false, .is_rgb = true, .is_yuv = false,
 		.afbc = true, .linear = true, .yuv_transform = true, .flex = true, .block_linear = false, .afrc = false,
+		.permitted_usage = add_universal_usages(STANDARD_USAGE),
 	},
 	{
 		.id = MALI_GRALLOC_FORMAT_INTERNAL_RGBA_1010102,
@@ -80,6 +85,7 @@ const std::vector<format_info_t> formats = {
 		.hsub = 0, .vsub = 0, .align_w = 1, .align_h = 1, ALIGN_W_CPU_DEFAULT,
 		.tile_size = 1, .has_alpha = true, .is_rgb = true, .is_yuv = false,
 		.afbc = true, .linear = true, .yuv_transform = true, .flex = false, .block_linear = false, .afrc = false,
+		.permitted_usage = add_universal_usages(STANDARD_USAGE),
 	},
 	{
 		.id = MALI_GRALLOC_FORMAT_INTERNAL_RGBA_16161616,
@@ -87,6 +93,7 @@ const std::vector<format_info_t> formats = {
 		.hsub = 0, .vsub = 0, .align_w = 1, .align_h = 1, ALIGN_W_CPU_DEFAULT,
 		.tile_size = 1, .has_alpha = true, .is_rgb = true, .is_yuv = false,
 		.afbc = true, .linear = true, .yuv_transform = true, .flex = true, .block_linear = false, .afrc = false,
+		.permitted_usage = add_universal_usages(STANDARD_USAGE),
 	},
 	{
 		.id = MALI_GRALLOC_FORMAT_INTERNAL_RGBA_10101010,
@@ -94,6 +101,7 @@ const std::vector<format_info_t> formats = {
 		.hsub = 0, .vsub = 0, .align_w = 1, .align_h = 1, ALIGN_W_CPU_DEFAULT,
 		.tile_size = 1, .has_alpha = true, .is_rgb = true, .is_yuv = false,
 		.afbc = true, .linear = true, .yuv_transform = true, .flex = false, .block_linear = false, .afrc = true,
+		.permitted_usage = add_universal_usages(STANDARD_USAGE),
 	},
 	{
 		.id = MALI_GRALLOC_FORMAT_INTERNAL_Y8,
@@ -101,6 +109,8 @@ const std::vector<format_info_t> formats = {
 		.hsub = 1, .vsub = 1, .align_w = 2, .align_h = 2, .align_w_cpu = 16,
 		.tile_size = 1, .has_alpha = false, .is_rgb = false, .is_yuv = true,
 		.afbc = true, .linear = true, .yuv_transform = false, .flex = true, .block_linear = false, .afrc = true,
+		.permitted_usage = add_universal_usages(GRALLOC_USAGE_HW_CAMERA_WRITE | GRALLOC_USAGE_HW_CAMERA_READ |
+		GRALLOC_USAGE_HW_TEXTURE | GRALLOC_USAGE_HW_RENDER),
 	},
 	{
 		.id = MALI_GRALLOC_FORMAT_INTERNAL_Y16,
@@ -108,6 +118,8 @@ const std::vector<format_info_t> formats = {
 		.hsub = 1, .vsub = 1, .align_w = 2, .align_h = 2, .align_w_cpu = 16,
 		.tile_size = 1, .has_alpha = false, .is_rgb = false, .is_yuv = true,
 		.afbc = true, .linear = true, .yuv_transform = false, .flex = true, .block_linear = false, .afrc = false,
+		.permitted_usage = add_universal_usages(GRALLOC_USAGE_HW_CAMERA_WRITE | GRALLOC_USAGE_HW_CAMERA_READ |
+		GRALLOC_USAGE_HW_TEXTURE | GRALLOC_USAGE_HW_RENDER),
 	},
 	/* 420 (8-bit) */
 	{
@@ -116,6 +128,7 @@ const std::vector<format_info_t> formats = {
 		.hsub = 2, .vsub = 2, .align_w = 2, .align_h = 2, ALIGN_W_CPU_DEFAULT,
 		.tile_size = 1, .has_alpha = false, .is_rgb = false, .is_yuv = true,
 		.afbc = true, .linear = false, .yuv_transform = false, .flex = false, .block_linear = false, .afrc = false,
+		.permitted_usage = add_universal_usages(STANDARD_USAGE),
 	},
 	{
 		.id = MALI_GRALLOC_FORMAT_INTERNAL_NV12,
@@ -123,6 +136,10 @@ const std::vector<format_info_t> formats = {
 		.hsub = 2, .vsub = 2, .align_w = 2, .align_h = 2, ALIGN_W_CPU_DEFAULT,
 		.tile_size = 1, .has_alpha = false, .is_rgb = false, .is_yuv = true,
 		.afbc = true, .linear = true, .yuv_transform = false, .flex = true, .block_linear = true, .afrc = true,
+		.permitted_usage = add_universal_usages(
+		GRALLOC_USAGE_HW_TEXTURE | GRALLOC_USAGE_HW_RENDER | GRALLOC_USAGE_HW_COMPOSER |
+		GRALLOC_USAGE_DECODER | GRALLOC_USAGE_HW_VIDEO_ENCODER | GRALLOC_USAGE_HW_FB |
+		GRALLOC_USAGE_FRONTBUFFER),
 	},
 	{
 		.id = MALI_GRALLOC_FORMAT_INTERNAL_NV21,
@@ -130,6 +147,7 @@ const std::vector<format_info_t> formats = {
 		.hsub = 2, .vsub = 2, .align_w = 2, .align_h = 2, ALIGN_W_CPU_DEFAULT,
 		.tile_size = 1, .has_alpha = false, .is_rgb = false, .is_yuv = true,
 		.afbc = true, .linear = true, .yuv_transform = false, .flex = true, .block_linear = false, .afrc = true,
+		.permitted_usage = add_universal_usages(STANDARD_USAGE),
 	},
 	{
 		.id = MALI_GRALLOC_FORMAT_INTERNAL_YV12,
@@ -137,6 +155,10 @@ const std::vector<format_info_t> formats = {
 		.hsub = 2, .vsub = 2, .align_w = 2, .align_h = 2, .align_w_cpu = 16,
 		.tile_size = 1, .has_alpha = false, .is_rgb = false, .is_yuv = true,
 		.afbc = true, .linear = true, .yuv_transform = false, .flex = true, .block_linear = false, .afrc = false,
+		.permitted_usage = add_universal_usages(GRALLOC_USAGE_HW_CAMERA_WRITE | GRALLOC_USAGE_HW_CAMERA_READ |
+		GRALLOC_USAGE_HW_TEXTURE | GRALLOC_USAGE_HW_RENDER | GRALLOC_USAGE_HW_COMPOSER | GRALLOC_USAGE_HW_FB |
+		GRALLOC_USAGE_HW_VIDEO_ENCODER | GRALLOC_USAGE_DECODER | GRALLOC_USAGE_EXTERNAL_DISP |
+		GRALLOC_USAGE_FRONTBUFFER),
 	},
 	{
 		.id = MALI_GRALLOC_FORMAT_INTERNAL_YU12,
@@ -144,6 +166,7 @@ const std::vector<format_info_t> formats = {
 		.hsub = 2, .vsub = 2, .align_w = 2, .align_h = 2, .align_w_cpu = 16,
 		.tile_size = 1, .has_alpha = false, .is_rgb = false, .is_yuv = true,
 		.afbc = false, .linear = true, .yuv_transform = false, .flex = true, .block_linear = false, .afrc = true,
+		.permitted_usage = add_universal_usages(STANDARD_USAGE),
 	},
 	/* 422 (8-bit) */
 	{
@@ -152,6 +175,7 @@ const std::vector<format_info_t> formats = {
 		.hsub = 2, .vsub = 1, .align_w = 2, .align_h = 1, ALIGN_W_CPU_DEFAULT,
 		.tile_size = 1, .has_alpha = false, .is_rgb = false, .is_yuv = true,
 		.afbc = true, .linear = true, .yuv_transform = false, .flex = true, .block_linear = false, .afrc = false,
+		.permitted_usage = add_universal_usages(STANDARD_USAGE),
 	},
 	{
 		.id = MALI_GRALLOC_FORMAT_INTERNAL_NV16,
@@ -159,6 +183,7 @@ const std::vector<format_info_t> formats = {
 		.hsub = 2, .vsub = 1, .align_w = 2, .align_h = 1, ALIGN_W_CPU_DEFAULT,
 		.tile_size = 1, .has_alpha = false, .is_rgb = false, .is_yuv = true,
 		.afbc = true, .linear = true, .yuv_transform = false, .flex = true, .block_linear = true, .afrc = true,
+		.permitted_usage = add_universal_usages(STANDARD_USAGE),
 	},
 	/* 444 (8-bit) */
 	{
@@ -174,6 +199,7 @@ const std::vector<format_info_t> formats = {
 		.hsub = 1, .vsub = 1, .align_w = 1, .align_h = 1, ALIGN_W_CPU_DEFAULT,
 		.tile_size = 1, .has_alpha = false, .is_rgb = false, .is_yuv = true,
 		.afbc = false, .linear = false, .yuv_transform = false, .flex = false, .block_linear = false, .afrc = true,
+		.permitted_usage = add_universal_usages(STANDARD_USAGE),
 	},
 	/* 444 (10-bit) 2 plane */
 	{
@@ -190,6 +216,7 @@ const std::vector<format_info_t> formats = {
 		.hsub = 1, .vsub = 1, .align_w = 1, .align_h = 1, ALIGN_W_CPU_DEFAULT,
 		.tile_size = 1, .has_alpha = false, .is_rgb = false, .is_yuv = true,
 		.afbc = false, .linear = false, .yuv_transform = false, .flex = false, .block_linear = false, .afrc = true,
+		.permitted_usage = add_universal_usages(STANDARD_USAGE),
 	},
 	{
 		.id = MALI_GRALLOC_FORMAT_INTERNAL_Q401,
@@ -197,6 +224,7 @@ const std::vector<format_info_t> formats = {
 		.hsub = 1, .vsub = 1, .align_w = 1, .align_h = 1, ALIGN_W_CPU_DEFAULT,
 		.tile_size = 1, .has_alpha = false, .is_rgb = false, .is_yuv = true,
 		.afbc = false, .linear = false, .yuv_transform = false, .flex = false, .block_linear = false, .afrc = true,
+		.permitted_usage = add_universal_usages(STANDARD_USAGE),
 	},
 	/* 420 (10-bit) */
 	{
@@ -205,6 +233,7 @@ const std::vector<format_info_t> formats = {
 		.hsub = 2, .vsub = 2, .align_w = 2, .align_h = 2, ALIGN_W_CPU_DEFAULT,
 		.tile_size = 1, .has_alpha = false, .is_rgb = false, .is_yuv = true,
 		.afbc = true, .linear = false, .yuv_transform = false, .flex = false, .block_linear = false, .afrc = false,
+		.permitted_usage = add_universal_usages(STANDARD_USAGE),
 	},
 	{
 		.id = MALI_GRALLOC_FORMAT_INTERNAL_Y0L2,
@@ -212,6 +241,7 @@ const std::vector<format_info_t> formats = {
 		.hsub = 2, .vsub = 2, .align_w = 2, .align_h = 2, ALIGN_W_CPU_DEFAULT,
 		.tile_size = 2, .has_alpha = true, .is_rgb = false, .is_yuv = true,
 		.afbc = false, .linear = true, .yuv_transform = false, .flex = false, .block_linear = false, .afrc = false,
+		.permitted_usage = add_universal_usages(STANDARD_USAGE),
 	},
 	{
 		.id = MALI_GRALLOC_FORMAT_INTERNAL_P010,
@@ -219,6 +249,7 @@ const std::vector<format_info_t> formats = {
 		.hsub = 2, .vsub = 2, .align_w = 2, .align_h = 2, ALIGN_W_CPU_DEFAULT,
 		.tile_size = 1, .has_alpha = false, .is_rgb = false, .is_yuv = true,
 		.afbc = true, .linear = true, .yuv_transform = false, .flex = true, .block_linear = true, .afrc = true,
+		.permitted_usage = add_universal_usages(STANDARD_USAGE),
 	},
 	{
 		.id = MALI_GRALLOC_FORMAT_INTERNAL_NV15,
@@ -226,6 +257,7 @@ const std::vector<format_info_t> formats = {
 		.hsub = 2, .vsub = 2, .align_w = 2, .align_h = 2, ALIGN_W_CPU_DEFAULT,
 		.tile_size = 1, .has_alpha = false, .is_rgb = false, .is_yuv = true,
 		.afbc = false, .linear = true, .yuv_transform = false, .flex = false, .block_linear = true, .afrc = false,
+		.permitted_usage = add_universal_usages(STANDARD_USAGE),
 	},
 	/* 422 (10-bit) */
 	{
@@ -234,6 +266,7 @@ const std::vector<format_info_t> formats = {
 		.hsub = 2, .vsub = 1, .align_w = 2, .align_h = 1, ALIGN_W_CPU_DEFAULT,
 		.tile_size = 1, .has_alpha = false, .is_rgb = false, .is_yuv = true,
 		.afbc = true, .linear = true, .yuv_transform = false, .flex = true, .block_linear = false, .afrc = false,
+		.permitted_usage = add_universal_usages(STANDARD_USAGE),
 	},
 	{
 		.id = MALI_GRALLOC_FORMAT_INTERNAL_P210,
@@ -241,21 +274,16 @@ const std::vector<format_info_t> formats = {
 		.hsub = 2, .vsub = 1, .align_w = 2, .align_h = 1, ALIGN_W_CPU_DEFAULT,
 		.tile_size = 1, .has_alpha = false, .is_rgb = false, .is_yuv = true,
 		.afbc = true, .linear = true, .yuv_transform = false, .flex = true, .block_linear = false, .afrc = true,
+		.permitted_usage = add_universal_usages(STANDARD_USAGE),
 	},
 	/* 444 (10-bit) */
-	{
-		.id = MALI_GRALLOC_FORMAT_INTERNAL_YUV444_10BIT_I,
-		.npln = 1, .ncmp = { 3, 0, 0 }, .bps = 10, .bpp_afbc = { 30, 0, 0 }, .bpp = { 0, 0, 0 },
-		.hsub = 1, .vsub = 1, .align_w = 1, .align_h = 1, ALIGN_W_CPU_DEFAULT,
-		.tile_size = 1, .has_alpha = false, .is_rgb = false, .is_yuv = true,
-		.afbc = true, .linear = false, .yuv_transform = false, .flex = false, .block_linear = false, .afrc = false,
-	},
 	{
 		.id = MALI_GRALLOC_FORMAT_INTERNAL_Y410,
 		.npln = 1, .ncmp = { 4, 0, 0 }, .bps = 10, .bpp_afbc = { 0, 0, 0 }, .bpp = { 32, 0, 0 },
 		.hsub = 1, .vsub = 1, .align_w = 1, .align_h = 1, ALIGN_W_CPU_DEFAULT,
 		.tile_size = 1, .has_alpha = true, .is_rgb = false, .is_yuv = true,
 		.afbc = false, .linear = true, .yuv_transform = false, .flex = false, .block_linear = false, .afrc = false,
+		.permitted_usage = add_universal_usages(STANDARD_USAGE),
 	},
 	/* Other */
 	{
@@ -264,6 +292,7 @@ const std::vector<format_info_t> formats = {
 		.hsub = 0, .vsub = 0, .align_w = 2, .align_h = 2, .align_w_cpu = 16,
 		.tile_size = 1, .has_alpha = false, .is_rgb = false, .is_yuv = false,
 		.afbc = false, .linear = true, .yuv_transform = false, .flex = false, .block_linear = false, .afrc = false,
+		.permitted_usage = add_universal_usages(STANDARD_USAGE),
 	},
 	{
 		.id = MALI_GRALLOC_FORMAT_INTERNAL_RAW12,
@@ -271,6 +300,8 @@ const std::vector<format_info_t> formats = {
 		.hsub = 0, .vsub = 0, .align_w = 4, .align_h = 2, .align_w_cpu = 4,
 		.tile_size = 1, .has_alpha = false, .is_rgb = false, .is_yuv = false,
 		.afbc = false, .linear = true, .yuv_transform = false, .flex = false, .block_linear = false, .afrc = false,
+		.permitted_usage = add_universal_usages(GRALLOC_USAGE_HW_CAMERA_WRITE | GRALLOC_USAGE_HW_CAMERA_READ |
+		GRALLOC_USAGE_RENDERSCRIPT | GRALLOC_USAGE_HW_TEXTURE | GRALLOC_USAGE_HW_RENDER),
 	},
 	{
 		.id = MALI_GRALLOC_FORMAT_INTERNAL_RAW10,
@@ -278,6 +309,9 @@ const std::vector<format_info_t> formats = {
 		.hsub = 0, .vsub = 0, .align_w = 4, .align_h = 2, .align_w_cpu = 4,
 		.tile_size = 1, .has_alpha = false, .is_rgb = false, .is_yuv = false,
 		.afbc = false, .linear = true, .yuv_transform = false, .flex = false, .block_linear = false, .afrc = false,
+		.permitted_usage = add_universal_usages(GRALLOC_USAGE_HW_CAMERA_WRITE | GRALLOC_USAGE_HW_CAMERA_READ |
+		GRALLOC_USAGE_RENDERSCRIPT |
+		GRALLOC_USAGE_HW_TEXTURE | GRALLOC_USAGE_HW_RENDER),
 	},
 	{
 		.id = MALI_GRALLOC_FORMAT_INTERNAL_BLOB,
@@ -285,6 +319,7 @@ const std::vector<format_info_t> formats = {
 		.hsub = 0, .vsub = 0, .align_w = 1, .align_h = 1, ALIGN_W_CPU_DEFAULT,
 		.tile_size = 1, .has_alpha = false, .is_rgb = false, .is_yuv = false,
 		.afbc = false, .linear = true, .yuv_transform = false, .flex = false, .block_linear = false, .afrc = false,
+		.permitted_usage = add_universal_usages(STANDARD_USAGE),
 	},
 	/* Depth and Stencil */
 	{
@@ -293,6 +328,7 @@ const std::vector<format_info_t> formats = {
 		.hsub = 0, .vsub = 0, .align_w = 1, .align_h = 1, ALIGN_W_CPU_DEFAULT,
 		.tile_size = 1, .has_alpha = false, .is_rgb = false, .is_yuv = false,
 		.afbc = false, .linear = true, .yuv_transform = false, .flex = false, .block_linear = false, .afrc = false,
+		.permitted_usage = add_universal_usages(STANDARD_USAGE),
 	},
 	{
 		.id = MALI_GRALLOC_FORMAT_INTERNAL_DEPTH_24,
@@ -300,6 +336,7 @@ const std::vector<format_info_t> formats = {
 		.hsub = 0, .vsub = 0, .align_w = 1, .align_h = 1, ALIGN_W_CPU_DEFAULT,
 		.tile_size = 1, .has_alpha = false, .is_rgb = false, .is_yuv = false,
 		.afbc = false, .linear = true, .yuv_transform = false, .flex = false, .block_linear = false, .afrc = false,
+		.permitted_usage = add_universal_usages(STANDARD_USAGE),
 	},
 	{
 		.id = MALI_GRALLOC_FORMAT_INTERNAL_DEPTH_24_STENCIL_8,
@@ -307,6 +344,7 @@ const std::vector<format_info_t> formats = {
 		.hsub = 0, .vsub = 0, .align_w = 1, .align_h = 1, ALIGN_W_CPU_DEFAULT,
 		.tile_size = 1, .has_alpha = false, .is_rgb = false, .is_yuv = false,
 		.afbc = false, .linear = true, .yuv_transform = false, .flex = false, .block_linear = false, .afrc = false,
+		.permitted_usage = add_universal_usages(STANDARD_USAGE),
 	},
 	{
 		.id = MALI_GRALLOC_FORMAT_INTERNAL_DEPTH_32F,
@@ -314,6 +352,7 @@ const std::vector<format_info_t> formats = {
 		.hsub = 0, .vsub = 0, .align_w = 1, .align_h = 1, ALIGN_W_CPU_DEFAULT,
 		.tile_size = 1, .has_alpha = false, .is_rgb = false, .is_yuv = false,
 		.afbc = false, .linear = true, .yuv_transform = false, .flex = false, .block_linear = false, .afrc = false,
+		.permitted_usage = add_universal_usages(STANDARD_USAGE),
 	},
 	{
 		.id = MALI_GRALLOC_FORMAT_INTERNAL_DEPTH_32F_STENCIL_8,
@@ -321,6 +360,7 @@ const std::vector<format_info_t> formats = {
 		.hsub = 0, .vsub = 0, .align_w = 1, .align_h = 1, ALIGN_W_CPU_DEFAULT,
 		.tile_size = 1, .has_alpha = false, .is_rgb = false, .is_yuv = false,
 		.afbc = false, .linear = true, .yuv_transform = false, .flex = false, .block_linear = false, .afrc = false,
+		.permitted_usage = add_universal_usages(STANDARD_USAGE),
 	},
 	{
 		.id = MALI_GRALLOC_FORMAT_INTERNAL_STENCIL_8,
@@ -328,6 +368,7 @@ const std::vector<format_info_t> formats = {
 		.hsub = 0, .vsub = 0, .align_w = 1, .align_h = 1, ALIGN_W_CPU_DEFAULT,
 		.tile_size = 1, .has_alpha = false, .is_rgb = false, .is_yuv = false,
 		.afbc = false, .linear = true, .yuv_transform = false, .flex = false, .block_linear = false, .afrc = false,
+		.permitted_usage = add_universal_usages(STANDARD_USAGE),
 	},
 	{
 		.id = MALI_GRALLOC_FORMAT_INTERNAL_R8,
@@ -335,6 +376,7 @@ const std::vector<format_info_t> formats = {
 		.hsub = 0, .vsub = 0, .align_w = 1, .align_h = 1, ALIGN_W_CPU_DEFAULT,
 		.tile_size = 1, .has_alpha = false, .is_rgb = true, .is_yuv = false,
 		.afbc = false, .linear = true, .yuv_transform = false, .flex = false, .block_linear = false, .afrc = false,
+		.permitted_usage = add_universal_usages(GRALLOC_USAGE_HW_TEXTURE | GRALLOC_USAGE_HW_RENDER),
 	}
 };
 
@@ -729,19 +771,6 @@ const format_ip_support_t formats_ip_support[] = {
 	},
 	/* 444 (10-bit) */
 	{
-		.id = MALI_GRALLOC_FORMAT_INTERNAL_YUV444_10BIT_I,
-		.cpu_rd = F_NONE,
-		.cpu_wr = F_NONE,
-		.gpu_rd = F_NONE,
-		.gpu_wr = F_NONE,
-		.dpu_rd = F_NONE,
-		.dpu_wr = F_NONE,
-		.dpu_aeu_wr = F_NONE,
-		.vpu_rd = F_NONE,
-		.vpu_wr = F_NONE,
-		.cam_wr = F_NONE,
-	},
-	{
 		.id = MALI_GRALLOC_FORMAT_INTERNAL_Y410,
 		.cpu_rd = F_LIN,
 		.cpu_wr = F_LIN,
@@ -886,19 +915,19 @@ const format_ip_support_t formats_ip_support[] = {
 		.vpu_wr = F_NONE,
 		.cam_wr = F_NONE,
 	},
-    {
-        .id = MALI_GRALLOC_FORMAT_INTERNAL_R8,
-        .cpu_rd = F_LIN,
-        .cpu_wr = F_LIN,
-        .gpu_rd = F_NONE,
-        .gpu_wr = F_NONE,
-        .dpu_rd = F_NONE,
-        .dpu_wr = F_NONE,
-        .dpu_aeu_wr = F_NONE,
-        .vpu_rd = F_NONE,
-        .vpu_wr = F_NONE,
-        .cam_wr = F_NONE,
-    },
+	{
+		.id = MALI_GRALLOC_FORMAT_INTERNAL_R8,
+		.cpu_rd = F_LIN,
+		.cpu_wr = F_LIN,
+		.gpu_rd = F_LIN,
+		.gpu_wr = F_LIN,
+		.dpu_rd = F_NONE,
+		.dpu_wr = F_NONE,
+		.dpu_aeu_wr = F_NONE,
+		.vpu_rd = F_NONE,
+		.vpu_wr = F_NONE,
+		.cam_wr = F_NONE,
+	},
 };
 /* clang-format on */
 

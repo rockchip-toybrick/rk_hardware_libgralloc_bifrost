@@ -16,15 +16,11 @@
  * limitations under the License.
  */
 
+#include "idl_common/constants.h"
 #include "idl_common/shared_metadata.h"
 #include "log.h"
-#include <aidl/arm/graphics/ChromaSiting.h>
 
-namespace arm
-{
-namespace mapper
-{
-namespace common
+namespace arm::mapper::common
 {
 
 template <typename T>
@@ -93,6 +89,16 @@ struct aligned_inline_vector
 	{
 		return &contents[0];
 	}
+
+	const T *begin() const
+	{
+		return &contents[0];
+	}
+
+	const T *end() const
+	{
+		return &contents[N];
+	}
 };
 
 struct shared_metadata
@@ -104,7 +110,8 @@ struct shared_metadata
 	/* Store only the value from the ExtendableType as the string in this type is not a fixed size */
 	aligned_optional<int64_t> chroma_siting{};
 	aligned_optional<Smpte2086> smpte2086{};
-	aligned_inline_vector<uint8_t, 2048> smpte2094_40{};
+	aligned_inline_vector<uint8_t, smpte2094_40_size> smpte2094_40{};
+	aligned_inline_vector<uint8_t, smpte2094_10_size> smpte2094_10{};
 	aligned_inline_vector<char, 256> name{};
 
 	shared_metadata() = default;
@@ -140,17 +147,22 @@ static_assert(offsetof(shared_metadata, smpte2086) == 64, "bad alignment");
 static_assert(sizeof(shared_metadata::smpte2086) == 44, "bad size");
 
 static_assert(offsetof(shared_metadata, smpte2094_40) == 108, "bad alignment");
-static_assert(sizeof(shared_metadata::smpte2094_40) == 2052, "bad size");
+static_assert(sizeof(shared_metadata::smpte2094_40) == 1272, "bad size");
 
-static_assert(offsetof(shared_metadata, name) == 2160, "bad alignment");
+static_assert(offsetof(shared_metadata, smpte2094_10) == 1380, "bad alignment");
+static_assert(sizeof(shared_metadata::smpte2094_10) == 4836, "bad size");
+
+static_assert(offsetof(shared_metadata, name) == 6216, "bad alignment");
 static_assert(sizeof(shared_metadata::name) == 260, "bad size");
 
 static_assert(alignof(shared_metadata) == 8, "bad alignment");
-static_assert(sizeof(shared_metadata) == 2424, "bad size");
+static_assert(sizeof(shared_metadata) == 6480, "bad size");
 
-void shared_metadata_init(void *memory, std::string_view name)
+void shared_metadata_init(void *memory, std::string_view name, Dataspace dataspace, const ExtendableType &chroma_siting)
 {
-	new (memory) shared_metadata(name);
+	auto *metadata = new (memory) shared_metadata(name);
+	metadata->dataspace = aligned_optional{dataspace};
+	metadata->chroma_siting = aligned_optional{chroma_siting.value};
 }
 
 size_t shared_metadata_size()
@@ -158,19 +170,19 @@ size_t shared_metadata_size()
 	return sizeof(shared_metadata);
 }
 
-void get_name(const private_handle_t *hnd, std::string *name)
+void get_name(const imported_handle *hnd, std::string *name)
 {
 	auto *metadata = reinterpret_cast<const shared_metadata *>(hnd->attr_base);
 	*name = metadata->get_name();
 }
 
-void get_crop_rect(const private_handle_t *hnd, std::optional<Rect> *crop)
+void get_crop_rect(const imported_handle *hnd, std::optional<Rect> *crop)
 {
 	auto *metadata = reinterpret_cast<const shared_metadata *>(hnd->attr_base);
 	*crop = metadata->crop.to_std_optional();
 }
 
-android::status_t set_crop_rect(const private_handle_t *hnd, const Rect &crop)
+android::status_t set_crop_rect(const imported_handle *hnd, const Rect &crop)
 {
 	auto *metadata = reinterpret_cast<shared_metadata *>(hnd->attr_base);
 
@@ -186,13 +198,13 @@ android::status_t set_crop_rect(const private_handle_t *hnd, const Rect &crop)
 	return android::OK;
 }
 
-void get_dataspace(const private_handle_t *hnd, std::optional<Dataspace> *dataspace)
+void get_dataspace(const imported_handle *hnd, std::optional<Dataspace> *dataspace)
 {
 	auto *metadata = reinterpret_cast<const shared_metadata *>(hnd->attr_base);
 	*dataspace = metadata->dataspace.to_std_optional();
 }
 
-void set_dataspace(const private_handle_t *hnd, const Dataspace &dataspace)
+void set_dataspace(const imported_handle *hnd, const Dataspace &dataspace)
 {
 	auto *metadata = reinterpret_cast<shared_metadata *>(hnd->attr_base);
 	metadata->dataspace = aligned_optional(dataspace);
@@ -210,7 +222,7 @@ bool chroma_siting_is_arm_value(int64_t val)
 		return false;
 	}
 }
-void get_chroma_siting(const private_handle_t *hnd, std::optional<ExtendableType> *chroma_siting)
+void get_chroma_siting(const imported_handle *hnd, std::optional<ExtendableType> *chroma_siting)
 {
 	auto *metadata = reinterpret_cast<const shared_metadata *>(hnd->attr_base);
 	auto stored_value = metadata->chroma_siting.to_std_optional();
@@ -223,31 +235,31 @@ void get_chroma_siting(const private_handle_t *hnd, std::optional<ExtendableType
 	}
 }
 
-void set_chroma_siting(const private_handle_t *hnd, const ExtendableType &chroma_siting)
+void set_chroma_siting(const imported_handle *hnd, const ExtendableType &chroma_siting)
 {
 	auto *metadata = reinterpret_cast<shared_metadata *>(hnd->attr_base);
 	metadata->chroma_siting = aligned_optional(chroma_siting.value);
 }
 
-void get_blend_mode(const private_handle_t *hnd, std::optional<BlendMode> *blend_mode)
+void get_blend_mode(const imported_handle *hnd, std::optional<BlendMode> *blend_mode)
 {
 	auto *metadata = reinterpret_cast<const shared_metadata *>(hnd->attr_base);
 	*blend_mode = metadata->blend_mode.to_std_optional();
 }
 
-void set_blend_mode(const private_handle_t *hnd, const BlendMode &blend_mode)
+void set_blend_mode(const imported_handle *hnd, const BlendMode &blend_mode)
 {
 	auto *metadata = reinterpret_cast<shared_metadata *>(hnd->attr_base);
 	metadata->blend_mode = aligned_optional(blend_mode);
 }
 
-void get_smpte2086(const private_handle_t *hnd, std::optional<Smpte2086> *smpte2086)
+void get_smpte2086(const imported_handle *hnd, std::optional<Smpte2086> *smpte2086)
 {
 	auto *metadata = reinterpret_cast<const shared_metadata *>(hnd->attr_base);
 	*smpte2086 = metadata->smpte2086.to_std_optional();
 }
 
-android::status_t set_smpte2086(const private_handle_t *hnd, const std::optional<Smpte2086> &smpte2086)
+android::status_t set_smpte2086(const imported_handle *hnd, const std::optional<Smpte2086> &smpte2086)
 {
 	auto *metadata = reinterpret_cast<shared_metadata *>(hnd->attr_base);
 	if (!smpte2086.has_value())
@@ -263,13 +275,13 @@ android::status_t set_smpte2086(const private_handle_t *hnd, const std::optional
 	return android::OK;
 }
 
-void get_cta861_3(const private_handle_t *hnd, std::optional<Cta861_3> *cta861_3)
+void get_cta861_3(const imported_handle *hnd, std::optional<Cta861_3> *cta861_3)
 {
 	auto *metadata = reinterpret_cast<const shared_metadata *>(hnd->attr_base);
 	*cta861_3 = metadata->cta861_3.to_std_optional();
 }
 
-android::status_t set_cta861_3(const private_handle_t *hnd, const std::optional<Cta861_3> &cta861_3)
+android::status_t set_cta861_3(const imported_handle *hnd, const std::optional<Cta861_3> &cta861_3)
 {
 	auto *metadata = reinterpret_cast<shared_metadata *>(hnd->attr_base);
 	if (!cta861_3.has_value())
@@ -285,14 +297,12 @@ android::status_t set_cta861_3(const private_handle_t *hnd, const std::optional<
 	return android::OK;
 }
 
-void get_smpte2094_40(const private_handle_t *hnd, std::optional<std::vector<uint8_t>> *smpte2094_40)
+void get_smpte2094_40(const imported_handle *hnd, std::optional<std::vector<uint8_t>> *smpte2094_40)
 {
 	auto *metadata = reinterpret_cast<const shared_metadata *>(hnd->attr_base);
 	if (metadata->smpte2094_40.size > 0)
 	{
-		const uint8_t *begin = metadata->smpte2094_40.data();
-		const uint8_t *end = begin + metadata->smpte2094_40.size;
-		smpte2094_40->emplace(begin, end);
+		smpte2094_40->emplace(metadata->smpte2094_40.begin(), metadata->smpte2094_40.end());
 	}
 	else
 	{
@@ -300,7 +310,7 @@ void get_smpte2094_40(const private_handle_t *hnd, std::optional<std::vector<uin
 	}
 }
 
-android::status_t set_smpte2094_40(const private_handle_t *hnd, const std::optional<std::vector<uint8_t>> &smpte2094_40)
+android::status_t set_smpte2094_40(const imported_handle *hnd, const std::optional<std::vector<uint8_t>> &smpte2094_40)
 {
 	auto *metadata = reinterpret_cast<shared_metadata *>(hnd->attr_base);
 	if (!smpte2094_40.has_value())
@@ -331,6 +341,43 @@ android::status_t set_smpte2094_40(const private_handle_t *hnd, const std::optio
 	return android::OK;
 }
 
-} // namespace common
-} // namespace mapper
-} // namespace arm
+void get_smpte2094_10(const imported_handle *hnd, std::optional<std::vector<uint8_t>> *smpte2094_10)
+{
+	auto *metadata = reinterpret_cast<const shared_metadata *>(hnd->attr_base);
+	if (metadata->smpte2094_10.size > 0)
+	{
+		smpte2094_10->emplace(metadata->smpte2094_10.begin(), metadata->smpte2094_10.end());
+	}
+	else
+	{
+		smpte2094_10->reset();
+	}
+}
+
+android::status_t set_smpte2094_10(const imported_handle *hnd, const std::optional<std::vector<uint8_t>> &smpte2094_10)
+{
+	auto *metadata = reinterpret_cast<shared_metadata *>(hnd->attr_base);
+	if (!smpte2094_10.has_value())
+	{
+		metadata->smpte2094_10.size = 0;
+		return android::OK;
+	}
+
+	const size_t size = smpte2094_10->size();
+	if (size == 0)
+	{
+		MALI_GRALLOC_LOGE("SMPTE 2094-10 vector is empty");
+		return android::BAD_VALUE;
+	}
+	else if (size > metadata->smpte2094_10.capacity())
+	{
+		MALI_GRALLOC_LOGE("SMPTE 2094-10 metadata too large to fit in shared metadata region");
+		return android::BAD_VALUE;
+	}
+
+	metadata->smpte2094_10.size = size;
+	std::memcpy(metadata->smpte2094_10.data(), smpte2094_10->data(), size);
+	return android::OK;
+}
+
+} // namespace arm::mapper::common

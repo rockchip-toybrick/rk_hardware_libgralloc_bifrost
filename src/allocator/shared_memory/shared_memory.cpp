@@ -24,94 +24,29 @@
 #include "log.h"
 #include "core/buffer.h"
 
-static int create_file(const char *name, uint64_t size)
+android::base::unique_fd gralloc_shared_memory_allocate(const char *name, off_t size)
 {
-	int ret = 0, fd = -1;
-
-	fd = syscall(__NR_memfd_create, name, MFD_ALLOW_SEALING);
-	if (fd < 0)
+	auto fd = android::base::unique_fd{static_cast<int>(syscall(__NR_memfd_create, name, MFD_ALLOW_SEALING))};
+	if (!fd.ok())
 	{
 		MALI_GRALLOC_LOGE("memfd_create: %s", strerror(errno));
-		goto fail;
+		return fd;
 	}
 
 	if (size > 0)
 	{
-		ret = ftruncate(fd, static_cast<off_t>(size));
-		if (ret < 0)
+		if (ftruncate(fd.get(), size) < 0)
 		{
 			MALI_GRALLOC_LOGE("ftruncate: %s", strerror(errno));
-			goto fail;
+			return android::base::unique_fd{-1};
 		}
 	}
 
-	ret = fcntl(fd, F_ADD_SEALS, F_SEAL_SHRINK | F_SEAL_GROW | F_SEAL_SEAL);
-	if (ret < 0)
+	if (fcntl(fd.get(), F_ADD_SEALS, F_SEAL_SHRINK | F_SEAL_GROW | F_SEAL_SEAL) < 0)
 	{
 		MALI_GRALLOC_LOGW("Failed to seal fd: %s", strerror(errno));
-		goto fail;
+		return android::base::unique_fd{-1};
 	}
 
 	return fd;
-fail:
-	if (fd >= 0)
-	{
-		close(fd);
-	}
-
-	return -1;
-}
-
-std::pair<int, void *> gralloc_shared_memory_allocate(const char *name, uint64_t size)
-{
-	int fd = -1;
-	void *mapping = MAP_FAILED;
-
-	fd = create_file(name, size);
-	if (fd < 0)
-	{
-		MALI_GRALLOC_LOGE("Failed to open shared memory file %s: %s", name, strerror(errno));
-		goto fail;
-	}
-
-	/*
-	 * Default protection on the shm region is PROT_EXEC | PROT_READ | PROT_WRITE.
-	 *
-	 * Personality flag READ_IMPLIES_EXEC which is used by some processes, namely gdbserver,
-	 * causes a mmap with PROT_READ to be translated to PROT_READ | PROT_EXEC.
-	 *
-	 * If we were to drop PROT_EXEC here with a call to ashmem_set_prot_region()
-	 * this can potentially cause clients to fail importing this gralloc attribute buffer
-	 * with EPERM error since PROT_EXEC is not allowed.
-	 *
-	 * Because of this we keep the PROT_EXEC flag.
-	 */
-	mapping = mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-	if (mapping == MAP_FAILED)
-	{
-		MALI_GRALLOC_LOGE("Failed to mmap %s region: %s", name, strerror(errno));
-		goto fail;
-	}
-
-	return std::make_pair(fd, mapping);
-fail:
-	if (fd >= 0)
-	{
-		close(fd);
-	}
-
-	return std::make_pair(-1, MAP_FAILED);
-}
-
-void gralloc_shared_memory_free(int fd, void *mapping, uint64_t size)
-{
-	if (mapping != MAP_FAILED)
-	{
-		munmap(mapping, size);
-	}
-
-	if (fd >= 0)
-	{
-		close(fd);
-	}
 }

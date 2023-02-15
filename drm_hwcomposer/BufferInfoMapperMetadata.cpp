@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Arm Limited. All rights reserved.
+ * Copyright (C) 2021-2022 Arm Limited. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,6 @@
  * Contains the implementation to get file descriptors for
  * reference Gralloc for the DRM Hardware Composer
  */
-
-#if PLATFORM_SDK_VERSION >= 30
 
 #define LOG_TAG "hwc-bufferinfo-mappermetadata-arm"
 
@@ -133,4 +131,3 @@ int BufferInfoMapperMetadata::GetFds(buffer_handle_t buffer_handle, hwc_drm_bo_t
 }
 
 } /* end namespace android */
-#endif

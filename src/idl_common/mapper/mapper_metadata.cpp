@@ -229,7 +229,7 @@ static std::vector<std::vector<PlaneLayoutComponent>> plane_layout_components_fr
 	/* clang-format on */
 
 	/* Special case for formats that can't be represented by a DRM fourcc */
-	const auto internal_format = hnd->get_alloc_format();
+	const auto internal_format = hnd->alloc_format;
 	if (!internal_format.has_modifiers())
 	{
 		switch (internal_format.get_base())
@@ -260,7 +260,7 @@ static std::vector<std::vector<PlaneLayoutComponent>> plane_layout_components_fr
 static android::status_t get_plane_layouts(const private_handle_t *handle, std::vector<PlaneLayout> *layouts)
 {
 	const int num_planes = get_num_planes(handle);
-	const auto internal_format = handle->get_alloc_format();
+	const auto internal_format = handle->alloc_format;
 	const format_info_t *format_info = internal_format.get_base_info();
 	if (format_info == nullptr)
 	{
@@ -362,8 +362,16 @@ void get_metadata(const private_handle_t *handle, const IMapper::MetadataType &m
 			break;
 		case StandardMetadataType::NAME:
 		{
+			auto import = handle_cast<imported_handle>(handle);
+			if (import == nullptr)
+			{
+				MALI_GRALLOC_LOGE("get() called on raw handle");
+				err = android::BAD_VALUE;
+				break;
+			}
+
 			std::string name;
-			get_name(handle, &name);
+			get_name(import, &name);
 			err = android::gralloc4::encodeName(name, &vec);
 			break;
 		}
@@ -402,7 +410,7 @@ void get_metadata(const private_handle_t *handle, const IMapper::MetadataType &m
 		case StandardMetadataType::COMPRESSION:
 		{
 			ExtendableType compression;
-			const auto internal_format = handle->get_alloc_format();
+			const auto internal_format = handle->alloc_format;
 			if (internal_format.is_afbc())
 			{
 				compression = Compression_AFBC;
@@ -423,7 +431,15 @@ void get_metadata(const private_handle_t *handle, const IMapper::MetadataType &m
 			break;
 		case StandardMetadataType::CHROMA_SITING:
 		{
-			const auto *format_info = handle->get_alloc_format().get_base_info();
+			auto import = handle_cast<imported_handle>(handle);
+			if (import == nullptr)
+			{
+				MALI_GRALLOC_LOGE("get() called on raw handle");
+				err = android::BAD_VALUE;
+				break;
+			}
+
+			const auto *format_info = handle->alloc_format.get_base_info();
 			if (format_info == nullptr)
 			{
 				err = android::BAD_VALUE;
@@ -437,7 +453,7 @@ void get_metadata(const private_handle_t *handle, const IMapper::MetadataType &m
 				chroma_siting_default = android::gralloc4::ChromaSiting_Unknown;
 			}
 
-			get_chroma_siting(handle, &chroma_siting);
+			get_chroma_siting(import, &chroma_siting);
 			err = android::gralloc4::encodeChromaSiting(chroma_siting.value_or(chroma_siting_default), &vec);
 			break;
 		}
@@ -453,20 +469,44 @@ void get_metadata(const private_handle_t *handle, const IMapper::MetadataType &m
 		}
 		case StandardMetadataType::DATASPACE:
 		{
+			auto import = handle_cast<imported_handle>(handle);
+			if (import == nullptr)
+			{
+				MALI_GRALLOC_LOGE("get() called on raw handle");
+				err = android::BAD_VALUE;
+				break;
+			}
+
 			std::optional<Dataspace> dataspace;
-			get_dataspace(handle, &dataspace);
+			get_dataspace(import, &dataspace);
 			err = android::gralloc4::encodeDataspace(dataspace.value_or(Dataspace::UNKNOWN), &vec);
 			break;
 		}
 		case StandardMetadataType::BLEND_MODE:
 		{
+			auto import = handle_cast<imported_handle>(handle);
+			if (import == nullptr)
+			{
+				MALI_GRALLOC_LOGE("get() called on raw handle");
+				err = android::BAD_VALUE;
+				break;
+			}
+
 			std::optional<BlendMode> blend_mode;
-			get_blend_mode(handle, &blend_mode);
+			get_blend_mode(import, &blend_mode);
 			err = android::gralloc4::encodeBlendMode(blend_mode.value_or(BlendMode::INVALID), &vec);
 			break;
 		}
 		case StandardMetadataType::CROP:
 		{
+			auto import = handle_cast<imported_handle>(handle);
+			if (import == nullptr)
+			{
+				MALI_GRALLOC_LOGE("get() called on raw handle");
+				err = android::BAD_VALUE;
+				break;
+			}
+
 			const int num_planes = get_num_planes(handle);
 			std::vector<Rect> crops(num_planes);
 			for (size_t plane_index = 0; plane_index < num_planes; ++plane_index)
@@ -483,7 +523,7 @@ void get_metadata(const private_handle_t *handle, const IMapper::MetadataType &m
 				if (plane_index == 0)
 				{
 					std::optional<Rect> crop_rect;
-					get_crop_rect(handle, &crop_rect);
+					get_crop_rect(import, &crop_rect);
 					if (crop_rect.has_value())
 					{
 						rect = crop_rect.value();
@@ -500,25 +540,66 @@ void get_metadata(const private_handle_t *handle, const IMapper::MetadataType &m
 		}
 		case StandardMetadataType::SMPTE2086:
 		{
+			auto import = handle_cast<imported_handle>(handle);
+			if (import == nullptr)
+			{
+				MALI_GRALLOC_LOGE("get() called on raw handle");
+				err = android::BAD_VALUE;
+				break;
+			}
+
 			std::optional<Smpte2086> smpte2086;
-			get_smpte2086(handle, &smpte2086);
+			get_smpte2086(import, &smpte2086);
 			err = android::gralloc4::encodeSmpte2086(smpte2086, &vec);
 			break;
 		}
 		case StandardMetadataType::CTA861_3:
 		{
+			auto import = handle_cast<imported_handle>(handle);
+			if (import == nullptr)
+			{
+				MALI_GRALLOC_LOGE("get() called on raw handle");
+				err = android::BAD_VALUE;
+				break;
+			}
+
 			std::optional<Cta861_3> cta861_3;
-			get_cta861_3(handle, &cta861_3);
+			get_cta861_3(import, &cta861_3);
 			err = android::gralloc4::encodeCta861_3(cta861_3, &vec);
 			break;
 		}
 		case StandardMetadataType::SMPTE2094_40:
 		{
+			auto import = handle_cast<imported_handle>(handle);
+			if (import == nullptr)
+			{
+				MALI_GRALLOC_LOGE("get() called on raw handle");
+				err = android::BAD_VALUE;
+				break;
+			}
+
 			std::optional<std::vector<uint8_t>> smpte2094_40;
-			get_smpte2094_40(handle, &smpte2094_40);
+			get_smpte2094_40(import, &smpte2094_40);
 			err = android::gralloc4::encodeSmpte2094_40(smpte2094_40, &vec);
 			break;
 		}
+#if PLATFORM_SDK_VERSION >= 33
+		case StandardMetadataType::SMPTE2094_10:
+		{
+			auto import = handle_cast<imported_handle>(handle);
+			if (import == nullptr)
+			{
+				MALI_GRALLOC_LOGE("get() called on raw handle");
+				err = android::BAD_VALUE;
+				break;
+			}
+
+			std::optional<std::vector<uint8_t>> smpte2094_10;
+			get_smpte2094_10(import, &smpte2094_10);
+			err = android::gralloc4::encodeSmpte2094_10(smpte2094_10, &vec);
+			break;
+		}
+#endif
 		case StandardMetadataType::INVALID:
 		default:
 			err = android::BAD_VALUE;
@@ -554,7 +635,7 @@ void get_metadata(const private_handle_t *handle, const IMapper::MetadataType &m
 	}
 }
 
-Error set_metadata(const private_handle_t *handle, const IMapper::MetadataType &metadataType,
+Error set_metadata(const imported_handle *handle, const IMapper::MetadataType &metadataType,
                    const hidl_vec<uint8_t> &metadata)
 {
 	if (android::gralloc4::isStandardMetadataType(metadataType))
@@ -574,7 +655,7 @@ Error set_metadata(const private_handle_t *handle, const IMapper::MetadataType &
 		}
 		case StandardMetadataType::CHROMA_SITING:
 		{
-			const auto *format_info = handle->get_alloc_format().get_base_info();
+			const auto *format_info = handle->alloc_format.get_base_info();
 			if (format_info == nullptr)
 			{
 				err = android::BAD_VALUE;
@@ -637,6 +718,18 @@ Error set_metadata(const private_handle_t *handle, const IMapper::MetadataType &
 			}
 			break;
 		}
+#if PLATFORM_SDK_VERSION >= 33
+		case StandardMetadataType::SMPTE2094_10:
+		{
+			std::optional<std::vector<uint8_t>> smpte2094_10;
+			err = android::gralloc4::decodeSmpte2094_10(metadata, &smpte2094_10);
+			if (!err)
+			{
+				err = set_smpte2094_10(handle, smpte2094_10);
+			}
+			break;
+		}
+#endif
 		case StandardMetadataType::CROP:
 		{
 			std::vector<Rect> crops;
@@ -750,7 +843,7 @@ void getFromBufferDescriptorInfo(IMapper::BufferDescriptorInfo const &descriptio
 		case StandardMetadataType::COMPRESSION:
 		{
 			ExtendableType compression;
-			const auto internal_format = partial_handle.get_alloc_format();
+			const auto internal_format = partial_handle.alloc_format;
 			if (internal_format.is_afbc())
 			{
 				compression = Compression_AFBC;
@@ -771,7 +864,7 @@ void getFromBufferDescriptorInfo(IMapper::BufferDescriptorInfo const &descriptio
 			break;
 		case StandardMetadataType::CHROMA_SITING:
 		{
-			const auto *format_info = partial_handle.get_alloc_format().get_base_info();
+			const auto *format_info = partial_handle.alloc_format.get_base_info();
 			if (format_info == nullptr)
 			{
 				err = android::BAD_VALUE;
@@ -799,7 +892,7 @@ void getFromBufferDescriptorInfo(IMapper::BufferDescriptorInfo const &descriptio
 		case StandardMetadataType::DATASPACE:
 		{
 			android_dataspace_t dataspace;
-			get_format_dataspace(partial_handle.get_alloc_format().get_base_info(),
+			get_format_dataspace(partial_handle.alloc_format.get_base_info(),
 			                     partial_handle.consumer_usage | partial_handle.producer_usage, partial_handle.width,
 			                     partial_handle.height, &dataspace);
 			err = android::gralloc4::encodeDataspace(static_cast<Dataspace>(dataspace), &vec);
@@ -845,7 +938,14 @@ void getFromBufferDescriptorInfo(IMapper::BufferDescriptorInfo const &descriptio
 			err = android::gralloc4::encodeSmpte2094_40(smpte2094_40, &vec);
 			break;
 		}
-
+#if PLATFORM_SDK_VERSION >= 33
+		case StandardMetadataType::SMPTE2094_10:
+		{
+			std::optional<std::vector<uint8_t>> smpte2094_10{};
+			err = android::gralloc4::encodeSmpte2094_10(smpte2094_10, &vec);
+			break;
+		}
+#endif
 		case StandardMetadataType::BUFFER_ID:
 		case StandardMetadataType::INVALID:
 		default:

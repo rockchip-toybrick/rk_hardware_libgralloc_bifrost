@@ -20,9 +20,11 @@
 #include <utility>
 #include <vector>
 
+#include <android-base/expected.h>
 #include <utils/Errors.h>
 
 #include "core/buffer_descriptor.h"
+#include "core/buffer.h"
 
 namespace arm
 {
@@ -37,15 +39,10 @@ namespace common
  * @param[in, out]  descriptor  Specifies the properties of the buffers to allocate
  * @param           count       Number of buffers to allocate.
  *
- * @return Pair of:
- *              1. Error code:
- *                  NONE upon success. Otherwise,
- *                  NO_MEMORY when the allocation cannot be fulfilled
- *                  BAD_VALUE when any of the property encoded in the descriptor is not supported
- *              2. Array of raw handles to newly allocated buffers.
+ * @return Raw handles or error code.
  */
-std::pair<android::status_t, std::vector<const native_handle_t *>> allocate(buffer_descriptor_t *descriptor,
-                                                                            uint32_t count);
+android::base::expected<std::vector<unique_private_handle>, android::status_t>
+allocate(buffer_descriptor_t *descriptor, uint32_t count);
 
 } // namespace common
 } // namespace allocator

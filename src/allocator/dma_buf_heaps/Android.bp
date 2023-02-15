@@ -23,7 +23,7 @@
  */
 cc_defaults {
     name: "libgralloc_allocator_dependencies",
-    /* No shared library dependencies. */
+    shared_libs: ["libdmabufheap"],
 }
 
 cc_library_static {
@@ -33,5 +33,5 @@ cc_library_static {
         "arm_gralloc_version_defaults",
         "libgralloc_allocator_dependencies",
     ],
-    srcs: ["dmabufheap.cpp"],
+    srcs: ["dma_buf_heaps.cpp"],
 }

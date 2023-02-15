@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020, 2022 ARM Limited. All rights reserved.
+ * Copyright (C) 2020, 2022-2023 ARM Limited. All rights reserved.
  *
  * Copyright 2016 The Android Open Source Project
  *
@@ -19,6 +19,7 @@
 
 #include "core/buffer_descriptor.h"
 #include "4.x/mapper/mapper_hidl_header.h"
+#include <algorithm>
 #include <assert.h>
 #include <inttypes.h>
 #include <string.h>
@@ -116,15 +117,20 @@ static uint64_t pop_descriptor_uint64(const hidl_vec<vecT> &vec, size_t *pos)
 
 static void push_descriptor_string(hidl_vec<uint8_t> *vec, size_t *pos, const std::string &str)
 {
-	strcpy(reinterpret_cast<char *>(vec->data() + *pos), str.c_str());
-	*pos += strlen(str.c_str()) + 1;
+	strncpy(reinterpret_cast<char *>(vec->data() + *pos), str.c_str(), MAX_STRING_LENGTH);
+	const char null_terminator = '\0';
+	memcpy(vec->data() + *pos + MAX_STRING_LENGTH, &null_terminator, sizeof(null_terminator));
+	*pos += MAX_STRING_LENGTH + 1;
 }
 
-static std::string pop_descriptor_string(const hidl_vec<uint8_t> &vec, size_t *pos)
+static std::array<char, MAX_STRING_LENGTH + 1> pop_descriptor_string(const hidl_vec<uint8_t> &vec, size_t *pos)
 {
-	std::string str(reinterpret_cast<const char *>(vec.data() + *pos));
-	*pos += str.size() + 1;
-	return str;
+	const size_t BUFFER_SIZE = MAX_STRING_LENGTH + 1;
+	std::array<char, BUFFER_SIZE> name;
+	std::copy(vec.data() + *pos, vec.data() + *pos + MAX_STRING_LENGTH, name.data());
+	name[MAX_STRING_LENGTH] = '\0';
+	*pos += BUFFER_SIZE;
+	return name;
 }
 
 template <typename vecT, typename BufferDescriptorInfoT>
@@ -133,25 +139,19 @@ static const hidl_vec<vecT> grallocEncodeBufferDescriptor(const BufferDescriptor
 	hidl_vec<vecT> descriptor;
 
 	static_assert(sizeof(uint32_t) % sizeof(vecT) == 0, "Unsupported vector type");
-	size_t dynamic_size = 0;
 	constexpr size_t static_size = (DESCRIPTOR_32BIT_FIELDS * sizeof(uint32_t) / sizeof(vecT)) +
-	                               (DESCRIPTOR_64BIT_FIELDS * sizeof(uint64_t) / sizeof(vecT));
-
-	/* Include the name and '\0' in the descriptor. */
-	dynamic_size += strlen(descriptorInfo.name.c_str()) + 1;
+	                               (DESCRIPTOR_64BIT_FIELDS * sizeof(uint64_t) / sizeof(vecT)) + (MAX_STRING_LENGTH + 1);
 
 	size_t pos = 0;
-	descriptor.resize(dynamic_size + static_size);
+	descriptor.resize(static_size);
 	push_descriptor_uint32(&descriptor, &pos, descriptorInfo.width);
 	push_descriptor_uint32(&descriptor, &pos, descriptorInfo.height);
 	push_descriptor_uint32(&descriptor, &pos, descriptorInfo.layerCount);
 	push_descriptor_uint32(&descriptor, &pos, static_cast<uint32_t>(descriptorInfo.format));
 	push_descriptor_uint64(&descriptor, &pos, static_cast<uint64_t>(descriptorInfo.usage));
 	push_descriptor_uint64(&descriptor, &pos, descriptorInfo.reservedSize);
-
-	assert(pos == static_size);
-
 	push_descriptor_string(&descriptor, &pos, descriptorInfo.name);
+	assert(pos == static_size);
 
 	return descriptor;
 }
@@ -163,10 +163,12 @@ static bool grallocDecodeBufferDescriptor(const hidl_vec<vecT> &androidDescripto
 	static_assert(sizeof(uint32_t) % sizeof(vecT) == 0, "Unsupported vector type");
 	size_t pos = 0;
 
-	if (((DESCRIPTOR_32BIT_FIELDS * sizeof(uint32_t) / sizeof(vecT)) +
-	     (DESCRIPTOR_64BIT_FIELDS * sizeof(uint64_t) / sizeof(vecT))) > androidDescriptor.size())
+	constexpr size_t static_size = (DESCRIPTOR_32BIT_FIELDS * sizeof(uint32_t) / sizeof(vecT)) +
+	                               (DESCRIPTOR_64BIT_FIELDS * sizeof(uint64_t) / sizeof(vecT)) + (MAX_STRING_LENGTH + 1);
+
+	if (static_size != androidDescriptor.size())
 	{
-		MALI_GRALLOC_LOGE("Descriptor is too small");
+		MALI_GRALLOC_LOGE("hidl_vec size does not match expected buffer descriptor size");
 		return false;
 	}
 

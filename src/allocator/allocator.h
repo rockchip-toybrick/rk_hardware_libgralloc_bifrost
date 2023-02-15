@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016, 2018-2021 ARM Limited. All rights reserved.
+ * Copyright (C) 2016, 2018-2022 ARM Limited. All rights reserved.
  *
  * Copyright (C) 2008 The Android Open Source Project
  *
@@ -21,19 +21,13 @@
 #include "core/buffer_descriptor.h"
 
 /*
- * Creates a new private_handle_t, allocates graphics memory to back it, and maps
- * the graphics memory into the process address space (excluding protected memory).
- *
- * The output must be destroyed by calling allocator_free, followed by
- * native_handle_close, and finally native_handle_delete.
+ * Creates a new private_handle_t with graphics memory to back it.
  *
  * @param descriptor     [in]    Request descriptor
- * @param out_handle     [out]   Output handle
  *
- * @return 0, on success; -errno, otherwise.
+ * @return nullptr upon failure
  */
-int allocator_allocate(const buffer_descriptor_t *descriptor, private_handle_t **out_handle);
-void allocator_free(private_handle_t *handle);
+unique_private_handle allocator_allocate(const buffer_descriptor_t *descriptor);
 
 /*
  * Signal start/end of CPU access to a allocated graphics memory.
@@ -44,10 +38,10 @@ void allocator_free(private_handle_t *handle);
  *
  * @return              0, on success; -errno, otherwise.
  */
-int allocator_sync_start(const private_handle_t *handle, bool read, bool write);
-int allocator_sync_end(const private_handle_t *handle, bool read, bool write);
+int allocator_sync_start(const imported_handle *handle, bool read, bool write);
+int allocator_sync_end(const imported_handle *handle, bool read, bool write);
 
-int allocator_map(private_handle_t *handle);
-void allocator_unmap(private_handle_t *handle);
+int allocator_map(imported_handle *handle);
+void allocator_unmap(imported_handle *handle);
 
 void allocator_close();

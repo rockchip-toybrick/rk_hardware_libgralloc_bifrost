@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 ARM Limited. All rights reserved.
+ * Copyright (C) 2020-2023 ARM Limited. All rights reserved.
  *
  * Copyright 2016 The Android Open Source Project
  *
@@ -26,6 +26,7 @@
 #include "core/buffer_descriptor.h"
 #include "core/format_info.h"
 #include "allocator/shared_memory/shared_memory.h"
+#include "usages.h"
 
 namespace arm
 {
@@ -36,8 +37,8 @@ namespace common
 
 using aidl::android::hardware::graphics::common::ExtendableType;
 
-/* Get the default chroma siting to use based on the format. */
-static void get_format_default_chroma_siting(internal_format_t format, ExtendableType *chroma_siting)
+/* Get the chroma siting to use based on the format. */
+static void get_format_chroma_siting(internal_format_t format, ExtendableType *chroma_siting, uint64_t usage)
 {
 	*chroma_siting = android::gralloc4::ChromaSiting_Unknown;
 	const auto *format_info = format.get_base_info();
@@ -46,7 +47,27 @@ static void get_format_default_chroma_siting(internal_format_t format, Extendabl
 		return;
 	}
 
-	if (format_info->is_yuv)
+	if (format_info->is_yuv && (usage & MALI_GRALLOC_USAGE_CHROMA_SITING_MASK))
+	{
+		MALI_GRALLOC_LOG(INFO) << "Forcing Chroma Siting due to usage";
+		/* Override chroma siting based on private usage. */
+		switch (usage & MALI_GRALLOC_USAGE_CHROMA_SITING_MASK)
+		{
+		case MALI_GRALLOC_USAGE_CHROMA_SITING_CENTER:
+			*chroma_siting = android::gralloc4::ChromaSiting_SitedInterstitial;
+			break;
+		case MALI_GRALLOC_USAGE_CHROMA_SITING_CENTER_X:
+			*chroma_siting = arm::mapper::common::ChromaSiting_CositedVertical;
+			break;
+		case MALI_GRALLOC_USAGE_CHROMA_SITING_CENTER_Y:
+			*chroma_siting = android::gralloc4::ChromaSiting_CositedHorizontal;
+			break;
+		case MALI_GRALLOC_USAGE_CHROMA_SITING_COSITED:
+			*chroma_siting = arm::mapper::common::ChromaSiting_CositedBoth;
+			break;
+		}
+	}
+	else if (format_info->is_yuv)
 	{
 		/* Default chroma siting values based on format */
 		switch (format.get_base())
@@ -62,7 +83,7 @@ static void get_format_default_chroma_siting(internal_format_t format, Extendabl
 			break;
 		case MALI_GRALLOC_FORMAT_INTERNAL_Y210:
 		case MALI_GRALLOC_FORMAT_INTERNAL_P210:
-			*chroma_siting = android::gralloc4::ChromaSiting_CositedHorizontal;
+			*chroma_siting = arm::mapper::common::ChromaSiting_CositedVertical;
 			break;
 		case MALI_GRALLOC_FORMAT_INTERNAL_NV16:
 		case MALI_GRALLOC_FORMAT_INTERNAL_Y410:
@@ -82,57 +103,57 @@ static void get_format_default_chroma_siting(internal_format_t format, Extendabl
 	}
 }
 
-std::pair<android::status_t, std::vector<const native_handle_t *>> allocate(buffer_descriptor_t *buffer_descriptor,
-                                                                            uint32_t count)
+android::base::expected<std::vector<unique_private_handle>, android::status_t> allocate(
+    buffer_descriptor_t *buffer_descriptor, uint32_t count)
 {
-	android::status_t error = android::NO_ERROR;
 	int stride = 0;
-	std::vector<const native_handle_t *> gralloc_buffers;
-
+	std::vector<unique_private_handle> gralloc_buffers;
 	gralloc_buffers.reserve(count);
 
 	for (uint32_t i = 0; i < count; i++)
 	{
-		private_handle_t *hnd = nullptr;
-		if (mali_gralloc_buffer_allocate(buffer_descriptor, &hnd) != 0)
+		auto hnd = mali_gralloc_buffer_allocate(buffer_descriptor);
+		if (hnd == nullptr)
 		{
-			MALI_GRALLOC_LOGE("%s, buffer allocation failed with %d", __func__, errno);
-			error = android::NO_MEMORY;
-			break;
+			MALI_GRALLOC_LOGE("buffer allocation failed: %s", strerror(errno));
+			return android::base::unexpected{ android::NO_MEMORY };
 		}
 
 		hnd->reserved_region_size = buffer_descriptor->reserved_size;
 		hnd->attr_size = mapper::common::shared_metadata_size() + hnd->reserved_region_size;
-		std::tie(hnd->share_attr_fd, hnd->attr_base) =
-		    gralloc_shared_memory_allocate("gralloc_shared_memory", hnd->attr_size);
-		if (hnd->share_attr_fd < 0 || hnd->attr_base == MAP_FAILED)
+		hnd->share_attr_fd =
+		    gralloc_shared_memory_allocate("gralloc_shared_memory", static_cast<off_t>(hnd->attr_size)).release();
+		if (hnd->share_attr_fd < 0)
 		{
 			MALI_GRALLOC_LOGE("%s, shared memory allocation failed with errno %d", __func__, errno);
-			mali_gralloc_buffer_free(hnd);
-			native_handle_delete(hnd);
-			error = android::BAD_VALUE;
-			break;
+			return android::base::unexpected{ android::BAD_VALUE };
 		}
 
-		mapper::common::shared_metadata_init(hnd->attr_base, buffer_descriptor->name);
-		const auto internal_format = buffer_descriptor->alloc_format;
-		const uint64_t usage = buffer_descriptor->consumer_usage | buffer_descriptor->producer_usage;
-		android_dataspace_t dataspace;
-		const auto *format_info = internal_format.get_base_info();
-		get_format_dataspace(format_info, usage, hnd->width, hnd->height, &dataspace);
+		/* Initialize shared buffer metadata. */
+		{
+			void *mapping =
+			    mmap(nullptr, static_cast<size_t>(hnd->attr_size), PROT_WRITE, MAP_SHARED, hnd->share_attr_fd, 0);
+			if (mapping == MAP_FAILED)
+			{
+				MALI_GRALLOC_LOGE("mmap failed on shared memory: %s", strerror(errno));
+				return android::base::unexpected{ android::NO_MEMORY };
+			}
 
-		ExtendableType chroma_siting;
-		get_format_default_chroma_siting(internal_format, &chroma_siting);
+			auto unmap = android::base::make_scope_guard([&mapping, &hnd]() { munmap(mapping, hnd->attr_size); });
 
-		mapper::common::set_dataspace(hnd, static_cast<mapper::common::Dataspace>(dataspace));
-		mapper::common::set_chroma_siting(hnd, chroma_siting);
+			const auto internal_format = buffer_descriptor->alloc_format;
+			const uint64_t usage = buffer_descriptor->consumer_usage | buffer_descriptor->producer_usage;
+			android_dataspace_t dataspace;
+			const auto *format_info = internal_format.get_base_info();
+			get_format_dataspace(format_info, usage, hnd->width, hnd->height, &dataspace);
 
-		/*
-		 * We need to set attr_base to MAP_FAILED before passing it to the client process to avoid sending an
-		 * invalid pointer.
-		 */
-		munmap(hnd->attr_base, hnd->attr_size);
-		hnd->attr_base = MAP_FAILED;
+			ExtendableType chroma_siting;
+			get_format_chroma_siting(internal_format, &chroma_siting, usage);
+
+			std::string_view name{buffer_descriptor->name.data()};
+			mapper::common::shared_metadata_init(mapping, name, static_cast<mapper::common::Dataspace>(dataspace),
+			                                     chroma_siting);
+		}
 
 #ifdef ENABLE_DEBUG_LOG
         {
@@ -164,7 +185,6 @@ std::pair<android::status_t, std::vector<const native_handle_t *>> allocate(buff
 #endif
 
 		int tmp_stride = buffer_descriptor->pixel_stride;
-
 		if (stride == 0)
 		{
 			stride = tmp_stride;
@@ -172,26 +192,14 @@ std::pair<android::status_t, std::vector<const native_handle_t *>> allocate(buff
 		else if (stride != tmp_stride)
 		{
 			/* Stride must be the same for all allocations */
-			mali_gralloc_buffer_free(hnd);
-			native_handle_delete(hnd);
 			stride = 0;
-			error = android::BAD_VALUE;
-			break;
+			return android::base::unexpected{ android::BAD_VALUE };
 		}
-		gralloc_buffers.emplace_back(hnd);
+
+		gralloc_buffers.push_back(std::move(hnd));
 	}
 
-	if (error != android::NO_ERROR)
-	{
-		for (auto &buffer : gralloc_buffers)
-		{
-			mali_gralloc_buffer_free(private_handle_t::downcast(buffer));
-			native_handle_delete(const_cast<native_handle_t *>(buffer));
-		}
-		gralloc_buffers.clear();
-	}
-
-	return std::make_pair(error, gralloc_buffers);
+	return gralloc_buffers;
 }
 
 } // namespace common

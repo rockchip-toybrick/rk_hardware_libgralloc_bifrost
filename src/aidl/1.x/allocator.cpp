@@ -42,40 +42,30 @@ ndk::ScopedAStatus allocator::allocate(const std::vector<uint8_t> &in_descriptor
 	CHECK_EQ(buffer_descriptor.flags, ::arm::mapper::common::DESCRIPTOR_ALLOCATOR_FLAGS);
 
 	auto result = ::arm::allocator::common::allocate(&buffer_descriptor, in_count);
-
-	switch (result.first)
+	if (!result.has_value())
 	{
-	case ::android::NO_ERROR:
-		break;
-	case ::android::NO_MEMORY:
-		return ndk::ScopedAStatus::fromServiceSpecificError(static_cast<int32_t>(AllocationError::NO_RESOURCES));
-	case ::android::BAD_VALUE:
-		return ndk::ScopedAStatus::fromServiceSpecificError(static_cast<int32_t>(AllocationError::UNSUPPORTED));
-	default:
-		MALI_GRALLOC_LOGE("Unknown allocation error %d\n", result.first);
-		return ndk::ScopedAStatus::fromServiceSpecificError(static_cast<int32_t>(AllocationError::UNSUPPORTED));
+		switch (result.error())
+		{
+		case ::android::NO_ERROR:
+			break;
+		case ::android::NO_MEMORY:
+			return ndk::ScopedAStatus::fromServiceSpecificError(static_cast<int32_t>(AllocationError::NO_RESOURCES));
+		case ::android::BAD_VALUE:
+			return ndk::ScopedAStatus::fromServiceSpecificError(static_cast<int32_t>(AllocationError::UNSUPPORTED));
+		default:
+			MALI_GRALLOC_LOGE("Unknown allocation error %d\n", result.error());
+			return ndk::ScopedAStatus::fromServiceSpecificError(static_cast<int32_t>(AllocationError::UNSUPPORTED));
+		}
 	}
 
-	CHECK_EQ(in_count, result.second.size());
+	CHECK_EQ(in_count, result->size());
 
 	out_result->stride = buffer_descriptor.pixel_stride;
 	out_result->buffers.reserve(in_count);
 	/* Pass ownership when returning the created handles. */
-	unsigned int i = 0;
-	for (const auto &native_handle : result.second)
+	for (auto &handle : *result)
 	{
-		out_result->buffers.emplace_back(::android::makeToAidl(native_handle));
-		out_result->buffers[i] = ::android::dupToAidl(native_handle);
-		i++;
-	}
-
-	/* The application should import the Gralloc buffers using IMapper for
-	 * further usage. Free the allocated buffers in IAllocator context.
-	 */
-	for (const auto &native_handle : result.second)
-	{
-	    mali_gralloc_buffer_free(private_handle_t::downcast(native_handle));
-	    native_handle_delete(const_cast<native_handle_t *>(native_handle));
+		out_result->buffers.emplace_back(::android::makeToAidl(handle.release()));
 	}
 
 	return ndk::ScopedAStatus::ok();
