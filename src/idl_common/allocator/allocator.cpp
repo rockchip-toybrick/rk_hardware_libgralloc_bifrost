@@ -155,18 +155,19 @@ android::base::expected<std::vector<unique_private_handle>, android::status_t> a
 			                                     chroma_siting);
 		}
 
-#ifdef ENABLE_DEBUG_LOG
+// #ifdef ENABLE_DEBUG_LOG
         {
             buffer_descriptor_t* bufDescriptor = buffer_descriptor;
-			const auto internal_format = hnd->get_alloc_format();
+			const auto internal_format = hnd->alloc_format;
 			const auto alloc_format = internal_format.get_base();
+			const char* name = (bufDescriptor->name).data();
 
-            ALOGD("got new private_handle_t instance @%p for buffer '%s'. share_fd : %d, share_attr_fd : %d, "
+            ALOGD("got new private_handle_t instance for buffer '%s'. share_fd : %d, share_attr_fd : %d, "
                 "width : %d, height : %d, "
                 "req_format : 0x%x, producer_usage : 0x%" PRIx64 ", consumer_usage : 0x%" PRIx64 ", "
                 ", stride : %d, "
                 "alloc_format : %d, size : %d, layer_count : %u",
-                hnd, (bufDescriptor->name).c_str() == nullptr ? "unset" : (bufDescriptor->name).c_str(),
+                name == nullptr ? "unset" : name,
               hnd->share_fd, hnd->share_attr_fd, hnd->width, hnd->height,
               hnd->req_format, hnd->producer_usage, hnd->consumer_usage,
               hnd->stride,
@@ -182,7 +183,7 @@ android::base::expected<std::vector<unique_private_handle>, android::status_t> a
                     (hnd->plane_info)[1].alloc_width,
                     (hnd->plane_info)[1].alloc_height);
         }
-#endif
+// #endif
 
 		int tmp_stride = buffer_descriptor->pixel_stride;
 		if (stride == 0)
