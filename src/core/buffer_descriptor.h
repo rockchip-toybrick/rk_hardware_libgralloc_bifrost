@@ -23,7 +23,8 @@
 #include "buffer.h"
 #include "internal_format.h"
 
-#define MAX_STRING_LENGTH 127
+#define MAX_NAME_LENGTH 127
+#define NAME_BUFFER_SIZE 128
 
 /* Flags to describe additional buffer descriptor information */
 enum buffer_descriptor_flags : uint32_t
@@ -48,7 +49,7 @@ struct buffer_descriptor_t
 	uint64_t consumer_usage{};
 	uint64_t hal_format{};
 	uint32_t layer_count{};
-	std::array<char, MAX_STRING_LENGTH + 1> name{};
+	std::array<char, NAME_BUFFER_SIZE> name{};
 	uint64_t reserved_size{};
 
 	/*

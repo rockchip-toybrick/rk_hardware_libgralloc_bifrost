@@ -83,7 +83,8 @@ template <typename vecT>
 static void push_descriptor_uint32(hidl_vec<vecT> *vec, size_t *pos, uint32_t val)
 {
 	static_assert(sizeof(val) % sizeof(vecT) == 0, "Unsupported vector type");
-	memcpy(vec->data() + *pos, &val, sizeof(val));
+	vecT *element = vec->data() + *pos;
+	memcpy(element, &val, sizeof(val));
 	*pos += sizeof(val) / sizeof(vecT);
 }
 
@@ -92,7 +93,8 @@ static uint32_t pop_descriptor_uint32(const hidl_vec<vecT> &vec, size_t *pos)
 {
 	uint32_t val;
 	static_assert(sizeof(val) % sizeof(vecT) == 0, "Unsupported vector type");
-	memcpy(&val, vec.data() + *pos, sizeof(val));
+	const vecT *element = vec.data() + *pos;
+	memcpy(&val, element, sizeof(val));
 	*pos += sizeof(val) / sizeof(vecT);
 	return val;
 }
@@ -101,7 +103,8 @@ template <typename vecT>
 static void push_descriptor_uint64(hidl_vec<vecT> *vec, size_t *pos, uint64_t val)
 {
 	static_assert(sizeof(val) % sizeof(vecT) == 0, "Unsupported vector type");
-	memcpy(vec->data() + *pos, &val, sizeof(val));
+	vecT *element = vec->data() + *pos;
+	memcpy(element, &val, sizeof(val));
 	*pos += sizeof(val) / sizeof(vecT);
 }
 
@@ -110,26 +113,26 @@ static uint64_t pop_descriptor_uint64(const hidl_vec<vecT> &vec, size_t *pos)
 {
 	uint64_t val;
 	static_assert(sizeof(val) % sizeof(vecT) == 0, "Unsupported vector type");
-	memcpy(&val, vec.data() + *pos, sizeof(val));
+	const vecT *element = vec.data() + *pos;
+	memcpy(&val, element, sizeof(val));
 	*pos += sizeof(val) / sizeof(vecT);
 	return val;
 }
 
 static void push_descriptor_string(hidl_vec<uint8_t> *vec, size_t *pos, const std::string &str)
 {
-	strncpy(reinterpret_cast<char *>(vec->data() + *pos), str.c_str(), MAX_STRING_LENGTH);
-	const char null_terminator = '\0';
-	memcpy(vec->data() + *pos + MAX_STRING_LENGTH, &null_terminator, sizeof(null_terminator));
-	*pos += MAX_STRING_LENGTH + 1;
+	strncpy(reinterpret_cast<char *>(vec->data() + *pos), str.c_str(), MAX_NAME_LENGTH);
+	(*vec)[*pos + MAX_NAME_LENGTH] = '\0';
+	*pos += NAME_BUFFER_SIZE;
 }
 
-static std::array<char, MAX_STRING_LENGTH + 1> pop_descriptor_string(const hidl_vec<uint8_t> &vec, size_t *pos)
+static std::array<char, NAME_BUFFER_SIZE> pop_descriptor_string(const hidl_vec<uint8_t> &vec, size_t *pos)
 {
-	const size_t BUFFER_SIZE = MAX_STRING_LENGTH + 1;
-	std::array<char, BUFFER_SIZE> name;
-	std::copy(vec.data() + *pos, vec.data() + *pos + MAX_STRING_LENGTH, name.data());
-	name[MAX_STRING_LENGTH] = '\0';
-	*pos += BUFFER_SIZE;
+	std::array<char, NAME_BUFFER_SIZE> name;
+	const uint8_t *element = vec.data() + *pos;
+	std::copy(element, element + MAX_NAME_LENGTH, name.data());
+	name[MAX_NAME_LENGTH] = '\0';
+	*pos += NAME_BUFFER_SIZE;
 	return name;
 }
 
@@ -140,7 +143,7 @@ static const hidl_vec<vecT> grallocEncodeBufferDescriptor(const BufferDescriptor
 
 	static_assert(sizeof(uint32_t) % sizeof(vecT) == 0, "Unsupported vector type");
 	constexpr size_t static_size = (DESCRIPTOR_32BIT_FIELDS * sizeof(uint32_t) / sizeof(vecT)) +
-	                               (DESCRIPTOR_64BIT_FIELDS * sizeof(uint64_t) / sizeof(vecT)) + (MAX_STRING_LENGTH + 1);
+	                               (DESCRIPTOR_64BIT_FIELDS * sizeof(uint64_t) / sizeof(vecT)) + NAME_BUFFER_SIZE;
 
 	size_t pos = 0;
 	descriptor.resize(static_size);
@@ -164,7 +167,7 @@ static bool grallocDecodeBufferDescriptor(const hidl_vec<vecT> &androidDescripto
 	size_t pos = 0;
 
 	constexpr size_t static_size = (DESCRIPTOR_32BIT_FIELDS * sizeof(uint32_t) / sizeof(vecT)) +
-	                               (DESCRIPTOR_64BIT_FIELDS * sizeof(uint64_t) / sizeof(vecT)) + (MAX_STRING_LENGTH + 1);
+	                               (DESCRIPTOR_64BIT_FIELDS * sizeof(uint64_t) / sizeof(vecT)) + NAME_BUFFER_SIZE;
 
 	if (static_size != androidDescriptor.size())
 	{

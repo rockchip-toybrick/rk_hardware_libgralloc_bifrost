@@ -38,9 +38,9 @@
 #include "usages.h"
 #include "helper_functions.h"
 
+
 #define AFBC_PIXELS_PER_BLOCK 256
 #define AFBC_HEADER_BUFFER_BYTES_PER_BLOCKENTRY 16
-
 
 /*
  * Get a global unique ID
@@ -94,24 +94,24 @@ static rect_t get_afbc_sb_size(AllocBaseType alloc_base_type)
 	const uint16_t AFBC_EXTRAWIDE_BLOCK_WIDTH = 64;
 	const uint16_t AFBC_EXTRAWIDE_BLOCK_HEIGHT = 4;
 
-	rect_t sb = {0, 0};
+	rect_t sb = { 0, 0 };
 
-	switch(alloc_base_type)
+	switch (alloc_base_type)
 	{
-		case AllocBaseType::AFBC:
-			sb.width = AFBC_BASIC_BLOCK_WIDTH;
-			sb.height = AFBC_BASIC_BLOCK_HEIGHT;
-			break;
-		case AllocBaseType::AFBC_WIDEBLK:
-			sb.width = AFBC_WIDE_BLOCK_WIDTH;
-			sb.height = AFBC_WIDE_BLOCK_HEIGHT;
-			break;
-		case AllocBaseType::AFBC_EXTRAWIDEBLK:
-			sb.width = AFBC_EXTRAWIDE_BLOCK_WIDTH;
-			sb.height = AFBC_EXTRAWIDE_BLOCK_HEIGHT;
-			break;
-		default:
-			break;
+	case AllocBaseType::AFBC:
+		sb.width = AFBC_BASIC_BLOCK_WIDTH;
+		sb.height = AFBC_BASIC_BLOCK_HEIGHT;
+		break;
+	case AllocBaseType::AFBC_WIDEBLK:
+		sb.width = AFBC_WIDE_BLOCK_WIDTH;
+		sb.height = AFBC_WIDE_BLOCK_HEIGHT;
+		break;
+	case AllocBaseType::AFBC_EXTRAWIDEBLK:
+		sb.width = AFBC_EXTRAWIDE_BLOCK_WIDTH;
+		sb.height = AFBC_EXTRAWIDE_BLOCK_HEIGHT;
+		break;
+	default:
+		break;
 	}
 	return sb;
 }
@@ -206,8 +206,8 @@ std::optional<alloc_type_t> get_alloc_type(const internal_format_t format, const
 		if (format_info->is_yuv && format.get_afbc_yuv_transform())
 		{
 			MALI_GRALLOC_LOG(WARNING) << std::showbase
-			  << "YUV Transform is incorrectly enabled for format = " << std::hex << format_info->id
-			  << ". Extended internal format = " << format;
+			                          << "YUV Transform is incorrectly enabled for format = " << std::hex
+			                          << format_info->id << ". Extended internal format = " << format;
 		}
 
 		/* Determine primary AFBC (superblock) type. */
@@ -254,14 +254,12 @@ std::optional<alloc_type_t> get_alloc_type(const internal_format_t format, const
 			return std::nullopt;
 		}
 
-		if (alloc_type.is_frontbuffer_safe &&
-		    (format.get_afbc_32x8() || format.get_afbc_64x4()))
+		if (alloc_type.is_frontbuffer_safe && (format.get_afbc_32x8() || format.get_afbc_64x4()))
 		{
 			MALI_GRALLOC_LOGE("ERROR: Front-buffer safe not supported with wide/extra-wide block.");
 		}
 
-		if (format_info->npln == 1 &&
-		    format.get_afbc_32x8() && format.get_afbc_64x4())
+		if (format_info->npln == 1 && format.get_afbc_32x8() && format.get_afbc_64x4())
 		{
 			/* "Wide + Extra-wide" implicitly means "multi-plane". */
 			MALI_GRALLOC_LOGE("ERROR: Invalid to specify multiplane AFBC with single plane format.");
@@ -289,16 +287,16 @@ std::optional<alloc_type_t> get_alloc_type(const internal_format_t format, const
 		}
 
 		alloc_type.afrc.rgba_luma_coding_unit_bytes = to_bytes(format.get_afrc_rgba_coding_size());
-		alloc_type.afrc.rgba_luma_plane_alignment = afrc_plane_alignment_requirement(
-		    alloc_type.afrc.rgba_luma_coding_unit_bytes);
+		alloc_type.afrc.rgba_luma_plane_alignment =
+		    afrc_plane_alignment_requirement(alloc_type.afrc.rgba_luma_coding_unit_bytes);
 		if (alloc_type.afrc.rgba_luma_plane_alignment == 0)
 		{
 			return std::nullopt;
 		}
 
 		alloc_type.afrc.chroma_coding_unit_bytes = to_bytes(format.get_afrc_chroma_coding_size());
-		alloc_type.afrc.chroma_plane_alignment = afrc_plane_alignment_requirement(
-		    alloc_type.afrc.chroma_coding_unit_bytes);
+		alloc_type.afrc.chroma_plane_alignment =
+		    afrc_plane_alignment_requirement(alloc_type.afrc.chroma_coding_unit_bytes);
 		if (alloc_type.afrc.chroma_plane_alignment == 0)
 		{
 			return std::nullopt;
@@ -412,12 +410,8 @@ static int max(int a, int b, int c, int d)
  * NOTE: pixel stride, where defined for format, is
  * incorporated into allocation dimensions.
  */
-static void get_pixel_w_h(uint32_t * const width,
-                          uint32_t * const height,
-                          const format_info_t format,
-                          const alloc_type_t alloc_type,
-                          const uint8_t plane,
-                          bool has_cpu_usage)
+static void get_pixel_w_h(uint32_t *const width, uint32_t *const height, const format_info_t format,
+                          const alloc_type_t alloc_type, const uint8_t plane, bool has_cpu_usage)
 {
 	const rect_t sb = get_afbc_sb_size(alloc_type, plane);
 
@@ -473,7 +467,8 @@ static void get_pixel_w_h(uint32_t * const width,
 		MALI_GRALLOC_LOGV("Plane[%hhu]: [SUB-SAMPLE] w:%d, h:%d\n", plane, *width, *height);
 		MALI_GRALLOC_LOGV("Plane[%hhu]: [PIXEL_ALIGN] w:%d\n", plane, pixel_align_w);
 		MALI_GRALLOC_LOGV("Plane[%hhu]: [LINEAR_TILE] w:%" PRIu16 "\n", plane, format.tile_size);
-		MALI_GRALLOC_LOGV("Plane[%hhu]: [AFBC_TILE] w:%" PRIu16 ", h:%" PRIu16 "\n", plane, afbc_tile.width, afbc_tile.height);
+		MALI_GRALLOC_LOGV("Plane[%hhu]: [AFBC_TILE] w:%" PRIu16 ", h:%" PRIu16 "\n", plane, afbc_tile.width,
+		                  afbc_tile.height);
 
 		pixel_align_w = max(pixel_align_w, afbc_tile.width);
 		pixel_align_h = max(pixel_align_h, afbc_tile.height);
@@ -503,8 +498,6 @@ static void get_pixel_w_h(uint32_t * const width,
 	*width = GRALLOC_ALIGN(*width, max(1, pixel_align_w, format.tile_size));
 	*height = GRALLOC_ALIGN(*height, max(1, pixel_align_h, format.tile_size));
 }
-
-
 
 static uint32_t gcd(uint32_t a, uint32_t b)
 {
@@ -541,7 +534,6 @@ uint32_t lcm(uint32_t a, uint32_t b)
 	return max(a, b);
 }
 
-
 /*
  * YV12 stride has additional complexity since chroma stride
  * must conform to the following:
@@ -551,10 +543,7 @@ uint32_t lcm(uint32_t a, uint32_t b)
  * Since the stride alignment must satisfy both CPU and HW
  * constraints, the luma stride must be doubled.
  */
-static void update_yv12_stride(int8_t plane,
-                               uint32_t luma_stride,
-                               uint32_t stride_align,
-                               uint32_t * byte_stride)
+static void update_yv12_stride(int8_t plane, uint32_t luma_stride, uint32_t stride_align, uint32_t *byte_stride)
 {
 	if (plane == 0)
 	{
@@ -577,8 +566,6 @@ static void update_yv12_stride(int8_t plane,
 		assert((*byte_stride & 15) == 0);
 	}
 }
-
-
 
 /*
  * Calculate allocation size.
@@ -619,30 +606,26 @@ static void calc_allocation_size(const int width,
 	plane_info[0].offset = 0;
 
 	bool has_cpu_usage = usage & (GRALLOC_USAGE_SW_READ_MASK | GRALLOC_USAGE_SW_WRITE_MASK);
-	bool has_hw_usage = usage & ~(GRALLOC_USAGE_PRIVATE_MASK | GRALLOC_USAGE_SW_READ_MASK | GRALLOC_USAGE_SW_WRITE_MASK | GRALLOC_USAGE_FRONTBUFFER);
+	bool has_hw_usage = usage & ~(GRALLOC_USAGE_PRIVATE_MASK | GRALLOC_USAGE_SW_READ_MASK |
+	                              GRALLOC_USAGE_SW_WRITE_MASK | GRALLOC_USAGE_FRONTBUFFER);
 
 	*size = 0;
 	for (uint8_t plane = 0; plane < format.npln; plane++)
 	{
 		plane_info[plane].alloc_width = width;
 		plane_info[plane].alloc_height = height;
-		get_pixel_w_h(&plane_info[plane].alloc_width,
-		              &plane_info[plane].alloc_height,
-		              format,
-		              alloc_type,
-		              plane,
+		get_pixel_w_h(&plane_info[plane].alloc_width, &plane_info[plane].alloc_height, format, alloc_type, plane,
 		              has_cpu_usage);
-		MALI_GRALLOC_LOGV("Aligned w=%d, h=%d (in pixels)",
-		      plane_info[plane].alloc_width, plane_info[plane].alloc_height);
+		MALI_GRALLOC_LOGV("Aligned w=%d, h=%d (in pixels)", plane_info[plane].alloc_width,
+		                  plane_info[plane].alloc_height);
 
 		/*
 		 * Calculate byte stride (per plane).
 		 */
 		if (alloc_type.is_afrc())
 		{
-			uint32_t coding_unit_bytes = plane == 0
-			    ? alloc_type.afrc.rgba_luma_coding_unit_bytes
-			    : alloc_type.afrc.chroma_coding_unit_bytes;
+			uint32_t coding_unit_bytes =
+			    plane == 0 ? alloc_type.afrc.rgba_luma_coding_unit_bytes : alloc_type.afrc.chroma_coding_unit_bytes;
 
 			uint32_t paging_tile_stride =
 			    plane_info[plane].alloc_width / alloc_type.afrc.clump_width[plane] / alloc_type.afrc.paging_tile_width;
@@ -731,7 +714,8 @@ static void calc_allocation_size(const int width,
 			uint32_t stride_align = lcm(hw_align, cpu_align);
 			if (stride_align)
 			{
-				plane_info[plane].byte_stride = GRALLOC_ALIGN(plane_info[plane].byte_stride * format.tile_size, stride_align) / format.tile_size;
+				plane_info[plane].byte_stride =
+				    GRALLOC_ALIGN(plane_info[plane].byte_stride * format.tile_size, stride_align) / format.tile_size;
 			}
 
 			if ( usage_flag_for_stride_alignment != 0
@@ -779,10 +763,7 @@ static void calc_allocation_size(const int width,
 			 */
 			if (format.id == MALI_GRALLOC_FORMAT_INTERNAL_YV12 && has_hw_usage && has_cpu_usage)
 			{
-				update_yv12_stride(plane,
-				                   plane_info[0].byte_stride,
-				                   stride_align,
-				                   &plane_info[plane].byte_stride);
+				update_yv12_stride(plane, plane_info[0].byte_stride, stride_align, &plane_info[plane].byte_stride);
 			}
 
 			/* 按需对 nv12 以外的 rk_video 使用的格式调整 byte_stride. */
@@ -847,8 +828,8 @@ static void calc_allocation_size(const int width,
 			MALI_GRALLOC_LOGV("Pixel stride: %d", *pixel_stride);
 		}
 
-		const uint32_t sb_num = (plane_info[plane].alloc_width * plane_info[plane].alloc_height)
-		                      / AFBC_PIXELS_PER_BLOCK;
+		const uint32_t sb_num =
+		    (plane_info[plane].alloc_width * plane_info[plane].alloc_height) / AFBC_PIXELS_PER_BLOCK;
 
 		/*
 		 * Calculate body size (per plane).
@@ -876,14 +857,12 @@ static void calc_allocation_size(const int width,
 		}
 		else if (alloc_type.is_afrc())
 		{
-			uint32_t alignment = plane == 0
-			    ? alloc_type.afrc.rgba_luma_plane_alignment
-			    : alloc_type.afrc.chroma_plane_alignment;
+			uint32_t alignment =
+			    plane == 0 ? alloc_type.afrc.rgba_luma_plane_alignment : alloc_type.afrc.chroma_plane_alignment;
 			*size = GRALLOC_ALIGN(*size, alignment);
 
-			uint32_t coding_unit_bytes = plane == 0
-			    ? alloc_type.afrc.rgba_luma_coding_unit_bytes
-			    : alloc_type.afrc.chroma_coding_unit_bytes;
+			uint32_t coding_unit_bytes =
+			    plane == 0 ? alloc_type.afrc.rgba_luma_coding_unit_bytes : alloc_type.afrc.chroma_coding_unit_bytes;
 			uint32_t s_coding_units = plane_info[plane].alloc_width / alloc_type.afrc.clump_width[plane];
 			uint32_t t_coding_units = plane_info[plane].alloc_height / alloc_type.afrc.clump_height[plane];
 			body_size = s_coding_units * t_coding_units * coding_unit_bytes;
@@ -905,7 +884,6 @@ static void calc_allocation_size(const int width,
 			body_size = plane_info[plane].byte_stride * plane_info[plane].alloc_height;
 		}
 		MALI_GRALLOC_LOGV("Body size: %d", body_size);
-
 
 		/*
 		 * Calculate header size (per plane).
@@ -934,19 +912,16 @@ static void calc_allocation_size(const int width,
 		 * Size must be updated after offset.
 		 */
 		*size += body_size + header_size;
-		MALI_GRALLOC_LOGV("size=%zu",*size);
+		MALI_GRALLOC_LOGV("size=%zu", *size);
 	}
 }
-
-
 
 /*
  * Validate selected format against requested.
  * Return true if valid, false otherwise.
  */
-static bool validate_format(const format_info_t * const format,
-                            const alloc_type_t alloc_type,
-                            const buffer_descriptor_t * const bufDescriptor)
+static bool validate_format(const format_info_t *const format, const alloc_type_t alloc_type,
+                            const buffer_descriptor_t *const bufDescriptor)
 {
 	if (alloc_type.is_afbc())
 	{
@@ -963,15 +938,14 @@ static bool validate_format(const format_info_t * const format,
 		 * Enforce consistency between number of format planes and
 		 * request for single/multi-plane AFBC.
 		 */
-		if (((format->npln == 1 && alloc_type.is_multi_plane) ||
-		    (format->npln > 1 && !alloc_type.is_multi_plane)))
+		if (((format->npln == 1 && alloc_type.is_multi_plane) || (format->npln > 1 && !alloc_type.is_multi_plane)))
 		{
 			MALI_GRALLOC_LOGE("ERROR: Format (%" PRIx32 ", num planes: %u) is incompatible with %s-plane AFBC request",
-			      format->id, format->npln, (alloc_type.is_multi_plane) ? "multi" : "single");
+			                  format->id, format->npln, (alloc_type.is_multi_plane) ? "multi" : "single");
 			return false;
 		}
 	}
-	else if(alloc_type.is_afrc())
+	else if (alloc_type.is_afrc())
 	{
 		if (!format->afrc)
 		{
@@ -983,7 +957,8 @@ static bool validate_format(const format_info_t * const format,
 	{
 		if (!format->block_linear)
 		{
-			MALI_GRALLOC_LOGE("ERROR: Block Linear format requested but not supported for base format: %" PRIx32, format->id);
+			MALI_GRALLOC_LOGE("ERROR: Block Linear format requested but not supported for base format: %" PRIx32,
+			                  format->id);
 			return false;
 		}
 	}
@@ -991,13 +966,13 @@ static bool validate_format(const format_info_t * const format,
 	{
 		if (format->linear == false)
 		{
-			MALI_GRALLOC_LOGE("ERROR: Uncompressed format requested but not supported for base format: %" PRIx32, format->id);
+			MALI_GRALLOC_LOGE("ERROR: Uncompressed format requested but not supported for base format: %" PRIx32,
+			                  format->id);
 			return false;
 		}
 	}
 
-	if (format->id == MALI_GRALLOC_FORMAT_INTERNAL_BLOB &&
-	    bufDescriptor->height != 1)
+	if (format->id == MALI_GRALLOC_FORMAT_INTERNAL_BLOB && bufDescriptor->height != 1)
 	{
 		MALI_GRALLOC_LOGE("ERROR: Height for format BLOB must be 1.");
 		return false;
@@ -1017,15 +992,16 @@ int mali_gralloc_derive_format_and_size(buffer_descriptor_t *descriptor)
 	buffer_descriptor_t* bufDescriptor = descriptor; // 'descriptor' 的别名.
 
 	/*
-	* Select optimal internal pixel format based upon
-	* usage and requested format.
-	*/
-	descriptor->alloc_format = mali_gralloc_select_format(*descriptor, usage, bufDescriptor->width * bufDescriptor->height);
-
+	 * Select optimal internal pixel format based upon
+	 * usage and requested format.
+	 */
+	descriptor->alloc_format = mali_gralloc_select_format(*descriptor,
+							      usage,
+							      bufDescriptor->width * bufDescriptor->height);
 	if (descriptor->alloc_format.is_undefined())
 	{
 		MALI_GRALLOC_LOGE("ERROR: Unrecognized and/or unsupported format 0x%" PRIx64 " and usage 0x%" PRIx64,
-		       descriptor->hal_format, usage);
+		                  descriptor->hal_format, usage);
 		return -EINVAL;
 	}
 
@@ -1059,101 +1035,90 @@ int mali_gralloc_derive_format_and_size(buffer_descriptor_t *descriptor)
 	 */
 	mali_gralloc_adjust_dimensions(descriptor->alloc_format, usage, &alloc_width, &alloc_height);
 
-	/* Obtain buffer size and plane information. */
-	calc_allocation_size(alloc_width,
-	                     alloc_height,
-	                     *alloc_type,
-	                     *format_info,
-						 usage,
-			     usage & RK_GRALLOC_USAGE_SPECIFY_STRIDE, // 'is_stride_specified'
-			     get_usage_flag_for_stride_alignment(usage),
-	                     &descriptor->pixel_stride,
-	                     &descriptor->size,
-	                     descriptor->plane_info);
-
-	/*-------------------------------------------------------*/
-	/* <为满足 implicit_requirement_for_rk_gralloc_alloc_interface_from_rk_video_decoder 的特殊处理.> */
-
-#if 0	/* "0" : 对 NV12, camera 目前也要求 implicit_requirement_for_rk_gralloc_alloc_interface_from_rk_video_decoder,
-	 *	 所以这里不再要求 buffer 必须和 VPU 有关.
-	 */
-
-	/* 若 VPU 将访问当前 buffer, 则 ... */
-	if ( (GRALLOC_USAGE_HW_VIDEO_ENCODER == (GRALLOC_USAGE_HW_VIDEO_ENCODER | bufDescriptor->consumer_usage) )
-		|| (GRALLOC_USAGE_DECODER == (GRALLOC_USAGE_DECODER | bufDescriptor->producer_usage) ) )
-#endif
 	{
-		const uint32_t base_format = bufDescriptor->alloc_format.get_base();
-		const bool is_stride_specified = usage & RK_GRALLOC_USAGE_SPECIFY_STRIDE;
-#if 0
-		const std::vector<format_info_t> &formats = get_all_base_formats();
-#endif
+		/* Obtain buffer size and plane information. */
+		calc_allocation_size(alloc_width,
+				     alloc_height,
+				     *alloc_type,
+				     *format_info,
+				     usage,
+				     usage & RK_GRALLOC_USAGE_SPECIFY_STRIDE, // 'is_stride_specified'
+				     get_usage_flag_for_stride_alignment(usage),
+				     &descriptor->pixel_stride,
+				     &descriptor->size,
+				     descriptor->plane_info);
 
-		/* 若 base_format "是" 被 rk_video 使用的格式, 且 rk client 要求指定 stride, 则 ... */
-		if ( is_base_format_used_by_rk_video(base_format) && is_stride_specified )
+		/*-------------------------------------------------------*/
+		/* <为满足 implicit_requirement_for_rk_gralloc_alloc_interface_from_rk_video_decoder 的特殊处理.> */
+
 		{
-			uint8_t bpp = 0;	// bits_per_pixel of plane_0
-			const int pixel_stride_asked_by_rk_video = bufDescriptor->width;
-			int pixel_stride_calculated_by_arm_gralloc = 0;
+			const uint32_t base_format = bufDescriptor->alloc_format.get_base();
+			const bool is_stride_specified = usage & RK_GRALLOC_USAGE_SPECIFY_STRIDE;
 
-			/* 若当前 是 AFBC 格式, 则 ... */
-			if ( bufDescriptor->alloc_format.is_afbc() )
+			/* 若 base_format "是" 被 rk_video 使用的格式, 且 rk client 要求指定 stride, 则 ... */
+			if ( is_base_format_used_by_rk_video(base_format) && is_stride_specified )
 			{
-				bpp = (format_info->bpp_afbc)[0];
+				uint8_t bpp = 0;	// bits_per_pixel of plane_0
+				const int pixel_stride_asked_by_rk_video = bufDescriptor->width;
+				int pixel_stride_calculated_by_arm_gralloc = 0;
+
+				/* 若当前 是 AFBC 格式, 则 ... */
+				if ( bufDescriptor->alloc_format.is_afbc() )
+				{
+					bpp = (format_info->bpp_afbc)[0];
+				}
+				else
+				{
+					bpp = (format_info->bpp)[0];
+				}
+
+				pixel_stride_calculated_by_arm_gralloc = bufDescriptor->plane_info[0].byte_stride * 8 / bpp;
+
+				if ( pixel_stride_asked_by_rk_video != pixel_stride_calculated_by_arm_gralloc )
+				{
+					W("pixel_stride_asked_by_rk_video(%d) and pixel_stride_calculated_by_arm_gralloc(%d) are different.",
+							  pixel_stride_asked_by_rk_video,
+							  pixel_stride_calculated_by_arm_gralloc);
+
+				}
+
+				/* 对某些 格式的 rk_video_buffer 的 size 做必要调整. */
+				adjust_rk_video_buffer_size(bufDescriptor, format_info);
 			}
-			else
+			else if ( is_base_format_used_by_rk_video(base_format) && is_stride_alignment_specified(usage) )
 			{
-				bpp = (format_info->bpp)[0];
+				adjust_rk_video_buffer_size(bufDescriptor, format_info);
 			}
-
-			pixel_stride_calculated_by_arm_gralloc = bufDescriptor->plane_info[0].byte_stride * 8 / bpp;
-
-			if ( pixel_stride_asked_by_rk_video != pixel_stride_calculated_by_arm_gralloc )
-			{
-				W("pixel_stride_asked_by_rk_video(%d) and pixel_stride_calculated_by_arm_gralloc(%d) are different.",
-						  pixel_stride_asked_by_rk_video,
-						  pixel_stride_calculated_by_arm_gralloc);
-
-			}
-
-			/* 对某些 格式的 rk_video_buffer 的 size 做必要调整. */
-			adjust_rk_video_buffer_size(bufDescriptor, format_info);
 		}
-		else if ( is_base_format_used_by_rk_video(base_format) && is_stride_alignment_specified(usage) )
+		/*-------------------------------------------------------*/
+
+		/*
+		 * Each layer of a multi-layer buffer must be aligned so that
+		 * it is accessible by both producer and consumer. In most cases,
+		 * the stride alignment is also sufficient for each layer, however
+		 * for AFBC the header buffer alignment is more constrained (see
+		 * AFBC specification v3.4, section 2.15: "Alignment requirements").
+		 * Also update the buffer size to accommodate all layers.
+		 */
+		if (descriptor->layer_count > 1)
 		{
-			adjust_rk_video_buffer_size(bufDescriptor, format_info);
+			if (descriptor->alloc_format.is_afbc())
+			{
+				if (descriptor->alloc_format.get_afbc_tiled_headers())
+				{
+					descriptor->size = GRALLOC_ALIGN(descriptor->size, 4096);
+				}
+				else
+				{
+					descriptor->size = GRALLOC_ALIGN(descriptor->size, 128);
+				}
+			}
+
+			descriptor->size *= descriptor->layer_count;
 		}
 	}
-	/*-------------------------------------------------------*/
-
-	/*
-	 * Each layer of a multi-layer buffer must be aligned so that
-	 * it is accessible by both producer and consumer. In most cases,
-	 * the stride alignment is also sufficient for each layer, however
-	 * for AFBC the header buffer alignment is more constrained (see
-	 * AFBC specification v3.4, section 2.15: "Alignment requirements").
-	 * Also update the buffer size to accommodate all layers.
-	 */
-	if (descriptor->layer_count > 1)
-	{
-		if (descriptor->alloc_format.is_afbc())
-		{
-			if (descriptor->alloc_format.get_afbc_tiled_headers())
-			{
-				descriptor->size = GRALLOC_ALIGN(descriptor->size, 4096);
-			}
-			else
-			{
-				descriptor->size = GRALLOC_ALIGN(descriptor->size, 128);
-			}
-		}
-
-		descriptor->size *= descriptor->layer_count;
-	}
-
 	return 0;
 }
-
 
 unique_private_handle mali_gralloc_buffer_allocate(buffer_descriptor_t *descriptor)
 {

@@ -38,7 +38,9 @@ soong_config_bool_variable {
 
 arm_gralloc_cc_defaults {
 	name: "arm_gralloc_defaults",
-	defaults: ["arm_gralloc_common_defaults"],
+	defaults: [
+		"arm_gralloc_common_defaults",
+	],
 	owner: "arm",
 	vendor: true,
 	proprietary: true,
