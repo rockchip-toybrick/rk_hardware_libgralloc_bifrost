@@ -34,3 +34,8 @@ static inline size_t round_up_to_page_size(size_t x)
 {
 	return (x + (PAGE_SIZE - 1)) & ~(PAGE_SIZE - 1);
 }
+
+static inline bool does_usage_have_flag(uint64_t usage, uint64_t flag)
+{
+       return ( flag == (usage & flag) );
+}

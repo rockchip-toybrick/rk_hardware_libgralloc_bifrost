@@ -490,3 +490,15 @@ const mali_gralloc_ip MALI_GRALLOC_IP_CAM = 1 << 5;
  */
 typedef bool (*mali_gralloc_ip_supports_feature_ptr)(mali_gralloc_ip producers, mali_gralloc_ip consumers,
                                                      const char *feature_name);
+
+/*---------------------------------------------------------------------------*/
+
+typedef enum rk_board_platform_t
+{
+	RK3326,
+	RK356X,
+	RK3588,
+	RK_BOARD_PLATFORM_UNKNOWN,
+} rk_board_platform_t;
+
+rk_board_platform_t get_rk_board_platform();

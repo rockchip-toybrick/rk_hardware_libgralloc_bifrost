@@ -1323,17 +1323,9 @@ static internal_format_t select_best_format(const buffer_descriptor_t &descripto
 	return alloc_format;
 }
 
-typedef enum rk_board_platform_t
-{
-	RK3326,
-	RK356X,
-	RK3588,
-	RK_BOARD_PLATFORM_UNKNOWN,
-} rk_board_platform_t;
-
 static rk_board_platform_t s_platform = RK_BOARD_PLATFORM_UNKNOWN;
 
-static rk_board_platform_t get_rk_board_platform()
+rk_board_platform_t get_rk_board_platform()
 {
 	/* 若 's_platform' 尚未初始化, 则... */
 	if ( RK_BOARD_PLATFORM_UNKNOWN == s_platform )
