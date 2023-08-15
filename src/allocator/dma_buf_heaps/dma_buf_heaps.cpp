@@ -16,6 +16,8 @@
  * limitations under the License.
  */
 
+#include <inttypes.h>
+
 #include <vector>
 #include <BufferAllocator/BufferAllocator.h>
 #include <android-base/unique_fd.h>
@@ -148,7 +150,17 @@ static BufferAllocator *get_global_buffer_allocator()
 	return &instance.allocator;
 }
 
-static dma_buf_heap pick_dma_buf_heap(uint64_t usage)
+static bool does_hal_format_need_buffer_within_4G(uint64_t hal_format)
+{
+	if ( HAL_PIXEL_FORMAT_YV12 == hal_format )
+	{
+		return true;
+	}
+
+	return false;
+}
+
+static dma_buf_heap pick_dma_buf_heap(uint64_t usage, uint64_t hal_format)
 {
 	if ( is_alloc_all_buffers_from_cma_heap_required_via_prop() )
 	{
@@ -162,11 +174,18 @@ static dma_buf_heap pick_dma_buf_heap(uint64_t usage)
 		return dma_buf_heap::system_uncached;
 	}
 
-	if ( (is_platform_rk356x() || is_platform_rk3588() )
-			&& does_usage_have_flag(usage, GRALLOC_USAGE_HW_VIDEO_ENCODER) )
+	if ( (is_platform_rk356x() || is_platform_rk3588() ) )
 	{
-		MALI_GRALLOC_LOGI("rk356x/rk3588: to allocate buffer within 4G for GRALLOC_USAGE_HW_VIDEO_ENCODER");
-		usage |= RK_GRALLOC_USAGE_WITHIN_4G;
+		if ( does_usage_have_flag(usage, GRALLOC_USAGE_HW_VIDEO_ENCODER) )
+		{
+			MALI_GRALLOC_LOGI("rk356x/rk3588: to allocate buffer within 4G for GRALLOC_USAGE_HW_VIDEO_ENCODER");
+			usage |= RK_GRALLOC_USAGE_WITHIN_4G;
+		}
+		else if ( does_hal_format_need_buffer_within_4G(hal_format) )
+		{
+			MALI_GRALLOC_LOGI("to allocate buffer with 4G for hal_format: %" PRIu64, hal_format);
+			usage |= RK_GRALLOC_USAGE_WITHIN_4G;
+		}
 	}
 
 	if ( usage & RK_GRALLOC_USAGE_PHY_CONTIG_BUFFER )
@@ -199,7 +218,8 @@ unique_private_handle allocator_allocate(const buffer_descriptor_t *descriptor)
 	auto allocator = get_global_buffer_allocator();
 
 	uint64_t usage = descriptor->consumer_usage | descriptor->producer_usage;
-	auto heap = pick_dma_buf_heap(usage);
+	uint64_t hal_format = descriptor->hal_format;
+	auto heap = pick_dma_buf_heap(usage, hal_format);
 	auto heap_name = get_dma_buf_heap_name(heap);
 	android::base::unique_fd fd{allocator->Alloc(heap_name, descriptor->size)};
 	if (fd < 0)
