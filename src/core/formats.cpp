@@ -1587,14 +1587,12 @@ static internal_format_t rk_gralloc_select_format(const mali_gralloc_android_for
 		{
 			/* 若当前 buffer_of_fb_target_layer 还将被送入 video_decoder,
 			 *	或 被显式要求禁用 AFBC,
-			 *	或 会被 CPU 一侧读写,
 			 *	或 会被 camera 读写,
 			 *	或 'internal_format' 是 若干特定格式,
 			 * 则, 将不使用 AFBC 格式.
 			 */
 			if ( (GRALLOC_USAGE_HW_VIDEO_ENCODER == (usage & GRALLOC_USAGE_HW_VIDEO_ENCODER) )
 				|| (MALI_GRALLOC_USAGE_NO_AFBC == (usage & MALI_GRALLOC_USAGE_NO_AFBC) )
-				|| (0 != (usage & (GRALLOC_USAGE_SW_READ_MASK | GRALLOC_USAGE_SW_WRITE_MASK) ) )
 				|| (GRALLOC_USAGE_HW_CAMERA_WRITE == (usage & GRALLOC_USAGE_HW_CAMERA_WRITE) )
 				|| (GRALLOC_USAGE_HW_CAMERA_READ == (usage & GRALLOC_USAGE_HW_CAMERA_READ) )
 				|| (internal_format == MALI_GRALLOC_FORMAT_INTERNAL_NV12)
@@ -1661,12 +1659,10 @@ static internal_format_t rk_gralloc_select_format(const mali_gralloc_android_for
                         {
                                 /* 尽可能对 buffers of sf_client_layer 使用 AFBC 格式. */
 
-                                /* 若 CPU "不会" 读写 buffer,
-                                 * 且 VPU "不会" 读 buffer (to encode),
+                                /* 若 VPU "不会" 读 buffer (to encode),
                                  * 且 camera "不会" 读写 buffer,
                                  * 则... */
-                                if ( 0 == (usage & (GRALLOC_USAGE_SW_READ_MASK | GRALLOC_USAGE_SW_WRITE_MASK) )
-                                                && 0 == (usage & GRALLOC_USAGE_HW_VIDEO_ENCODER)
+                                if ( 0 == (usage & GRALLOC_USAGE_HW_VIDEO_ENCODER)
                                                 && 0 == (usage & GRALLOC_USAGE_HW_CAMERA_WRITE)
                                                 && 0 == (usage & GRALLOC_USAGE_HW_CAMERA_READ) )
                                 {
