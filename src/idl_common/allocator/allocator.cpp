@@ -18,6 +18,7 @@
 
 #include "../custom_log.h"
 #include <inttypes.h>
+#include <sys/stat.h>
 
 #include "idl_common/allocator.h"
 #include "idl_common/shared_metadata.h"
@@ -161,17 +162,29 @@ android::base::expected<std::vector<unique_private_handle>, android::status_t> a
 			const auto internal_format = hnd->alloc_format;
 			const auto alloc_format = internal_format.get_base();
 			const char* name = (bufDescriptor->name).data();
+			int ino = -1;
+			if (hnd->share_fd >= 0) {
+				struct stat file_stat;
+				int ret;
+				ret = fstat(hnd->share_fd, &file_stat);
+				if (ret < 0) {
+					MALI_GRALLOC_LOGE("failed to get inode");
+				}
+				ino = file_stat.st_ino;
+			}
 
             ALOGD("got new private_handle_t instance for buffer '%s'. share_fd : %d, share_attr_fd : %d, "
                 "width : %d, height : %d, "
                 "req_format : 0x%x, producer_usage : 0x%" PRIx64 ", consumer_usage : 0x%" PRIx64 ", "
                 ", stride : %d, "
-                "alloc_format : %d, size : %d, layer_count : %u",
+                "alloc_format : %d, size : %d, layer_count : %u"
+                ", inode : %d",
                 name == nullptr ? "unset" : name,
               hnd->share_fd, hnd->share_attr_fd, hnd->width, hnd->height,
               hnd->req_format, hnd->producer_usage, hnd->consumer_usage,
               hnd->stride,
-              alloc_format, hnd->size, hnd->layer_count);
+              alloc_format, hnd->size, hnd->layer_count,
+              ino);
             ALOGD("plane_info[0]: offset : %u, byte_stride : %u, alloc_width : %u, alloc_height : %u",
                     (hnd->plane_info)[0].offset,
                     (hnd->plane_info)[0].byte_stride,
