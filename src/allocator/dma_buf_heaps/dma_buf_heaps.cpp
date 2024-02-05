@@ -267,6 +267,18 @@ int allocator_sync_end(const imported_handle *handle, bool read, bool write)
 	return allocator->CpuSyncEnd(static_cast<unsigned>(handle->share_fd), make_sync_type(read, write));
 }
 
+int allocator_sync_start(const private_handle_t *handle, bool read, bool write)
+{
+	auto allocator = get_global_buffer_allocator();
+	return allocator->CpuSyncStart(static_cast<unsigned>(handle->share_fd), make_sync_type(read, write));
+}
+
+int allocator_sync_end(const private_handle_t *handle, bool read, bool write)
+{
+	auto allocator = get_global_buffer_allocator();
+	return allocator->CpuSyncEnd(static_cast<unsigned>(handle->share_fd), make_sync_type(read, write));
+}
+
 int allocator_map(imported_handle *handle)
 {
 	void *hint = nullptr;

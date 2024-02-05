@@ -41,6 +41,9 @@ unique_private_handle allocator_allocate(const buffer_descriptor_t *descriptor);
 int allocator_sync_start(const imported_handle *handle, bool read, bool write);
 int allocator_sync_end(const imported_handle *handle, bool read, bool write);
 
+int allocator_sync_start(const private_handle_t *handle, bool read, bool write);
+int allocator_sync_end(const private_handle_t *handle, bool read, bool write);
+
 int allocator_map(imported_handle *handle);
 void allocator_unmap(imported_handle *handle);
 

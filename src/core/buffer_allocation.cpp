@@ -1120,8 +1120,14 @@ int mali_gralloc_derive_format_and_size(buffer_descriptor_t *descriptor)
 	return 0;
 }
 
+void init_afbc(uint8_t *buf, const internal_format_t alloc_format,
+	       const bool is_multi_plane,
+	       const int w, const int h);
+
 unique_private_handle mali_gralloc_buffer_allocate(buffer_descriptor_t *descriptor)
 {
+	uint64_t usage = descriptor->consumer_usage | descriptor->producer_usage;
+
 	int err = mali_gralloc_derive_format_and_size(descriptor);
 	if (err != 0)
 	{
@@ -1138,5 +1144,39 @@ unique_private_handle mali_gralloc_buffer_allocate(buffer_descriptor_t *descript
 
 	handle->backing_store_id = getUniqueId();
 
+	if ( 0 == (usage & GRALLOC_USAGE_PROTECTED) )
+	{
+		if (descriptor->alloc_format.is_afbc())
+		{
+			private_handle_t* raw_hnd = handle.get();
+			void *hint = nullptr;
+			int protection = PROT_READ | PROT_WRITE, flags = MAP_SHARED;
+			off_t page_offset = 0;
+			void *mapping = mmap(hint, handle->size, protection, flags, handle->share_fd, page_offset);
+			if (MAP_FAILED == mapping)
+			{
+				MALI_GRALLOC_LOGE("mmap(share_fd = %d) failed: %s", handle->share_fd, strerror(errno));
+				goto out;
+			}
+
+			allocator_sync_start(raw_hnd, true, true);
+
+			/* For separated plane YUV, there is a header to initialise per plane. */
+			const plane_layout plane_info = descriptor->plane_info;
+			const bool is_multi_plane = handle->is_multi_plane();
+			for (int i = 0; i < max_planes && (i == 0 || plane_info[i].byte_stride != 0); i++)
+			{
+				init_afbc(static_cast<uint8_t *>(mapping) + plane_info[i].offset,
+						descriptor->alloc_format,
+						is_multi_plane,
+						plane_info[i].alloc_width,
+						plane_info[i].alloc_height);
+			}
+
+			allocator_sync_end(raw_hnd, true, true);
+		}
+	}
+
+out:
 	return handle;
 }
