@@ -1174,6 +1174,14 @@ unique_private_handle mali_gralloc_buffer_allocate(buffer_descriptor_t *descript
 			}
 
 			allocator_sync_end(raw_hnd, true, true);
+
+			if ( munmap(mapping, handle->size ) < 0 )
+			{
+				MALI_GRALLOC_LOGE("munmap(mapping: %p, size = %d) failed: %s",
+						   mapping,
+						   handle->size,
+						   strerror(errno));
+			}
 		}
 	}
 
