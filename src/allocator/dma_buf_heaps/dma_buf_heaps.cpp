@@ -39,6 +39,8 @@ static const char kDmabufSystemDma32HeapName[] = "system-dma32";
 static const char kDmabufSystemUncachedDma32HeapName[] = "system-uncached-dma32";
 
 #define DMABUF_CMA		(char*)"cma"
+/* name of secure_heap. */
+#define SECURE_HEAP		(char*)"secure"
 
 /*---------------------------------------------------------------------------*/
 
@@ -50,7 +52,7 @@ enum class dma_buf_heap
 
 	/* Custom heaps */
 	physically_contiguous, // cma
-	protected_memory,
+	protected_memory, // secure
 	system_dma32,
 	system_uncached_dma32,
 };
@@ -77,7 +79,7 @@ const custom_heap physically_contiguous_heap =
 
 const custom_heap protected_memory_heap =
 {
-	"protected",
+	SECURE_HEAP,
 	{
 		"ion_protected_heap",
 		0,
@@ -170,8 +172,8 @@ static dma_buf_heap pick_dma_buf_heap(uint64_t usage, uint64_t hal_format)
 
 	if (usage & GRALLOC_USAGE_PROTECTED)
 	{
-		MALI_GRALLOC_LOGE("Protected dmabuf_heap memory is not supported yet.");
-		return dma_buf_heap::system_uncached;
+		MALI_GRALLOC_LOGI("to allocate all buffer from secure_heap");
+		return dma_buf_heap::protected_memory;
 	}
 
 	if ( (is_platform_rk356x() || is_platform_rk3588() ) )
