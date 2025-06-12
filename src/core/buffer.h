@@ -207,6 +207,34 @@ struct private_handle_t : public native_handle
 		/* For multi-plane, the byte stride for the second plane will always be non-zero. */
 		return (plane_info[1].alloc_width != 0);
 	}
+
+	static const int sNumFds = PRIVATE_HANDLE_NUM_FDS;
+
+	void *base{nullptr};
+
+	uint32_t offset{0};
+
+	static int validate(const native_handle *handle)
+	{
+		const private_handle_t *hnd = static_cast<const private_handle_t *>(handle);
+		if ((handle == nullptr) || (handle->version != sizeof(native_handle)) ||
+		((handle->numFds != sNumFds) && (handle->numFds != (sNumFds - 1))) ||
+		((handle->numInts != PRIVATE_HANDLE_NUM_INTS) &&
+		(handle->numInts != static_cast<int>((sizeof(private_handle_t) - sizeof(native_handle)) / sizeof(int) -
+			static_cast<unsigned long>(static_cast<long>(handle->numFds))))) || (hnd->magic != sMagic)) {
+			return -EINVAL;
+		}
+
+		return 0;
+	}
+
+	static private_handle_t *dynamicCast(const native_handle *in)
+	{
+		if (validate(in) == 0) {
+			return (private_handle_t*)in;
+		}
+		return nullptr;
+	}
 };
 
 struct imported_handle : private_handle_t
@@ -327,7 +355,7 @@ static inline unique_imported_handle make_imported_handle(private_handle_t *raw_
 	}
 
 	/* Copy shared portion of handle metadata. */
-	for (int i = PRIVATE_HANDLE_NUM_FDS; i < PRIVATE_HANDLE_NUM_FDS + PRIVATE_HANDLE_NUM_INTS; ++i)
+	for (size_t i = PRIVATE_HANDLE_NUM_FDS; i < PRIVATE_HANDLE_NUM_FDS + PRIVATE_HANDLE_NUM_INTS; ++i)
 	{
 		import_handle->data[i] = raw_handle->data[i];
 	}
