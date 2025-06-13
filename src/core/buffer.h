@@ -210,9 +210,8 @@ struct private_handle_t : public native_handle
 
 	static const int sNumFds = PRIVATE_HANDLE_NUM_FDS;
 
-	void *base{nullptr};
-
-	uint32_t offset{0};
+	uint64_t base {0};   // No actually used; it is merely for compatibility with other system.
+	uint32_t offset {0}; // No actually used; it is merely for compatibility with other system.
 
 	static int validate(const native_handle *handle)
 	{
